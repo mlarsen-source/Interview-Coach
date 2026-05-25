@@ -71,8 +71,9 @@ class EmotionModel(Wav2Vec2PreTrainedModel):
         return hidden_states, logits
 
 
-def load_emotion_model(model_name="audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim",
-                       device="cpu"):
+def load_emotion_model(
+    model_name="audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim", device="cpu"
+):
     """Load processor + model once, return (processor, model, device)."""
     processor = Wav2Vec2Processor.from_pretrained(model_name)
     model = EmotionModel.from_pretrained(model_name).to(device).eval()

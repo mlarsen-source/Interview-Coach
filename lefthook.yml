@@ -1,0 +1,17 @@
+pre-push:
+  commands:
+    frontend-lint:
+      root: frontend/
+      run: pnpm lint
+    frontend-format:
+      root: frontend/
+      run: pnpm format:check
+    frontend-typecheck:
+      root: frontend/
+      run: pnpm typecheck
+    backend-lint:
+      root: backend/
+      run: ruff check .
+    backend-format:
+      root: backend/
+      run: ruff format --check .
