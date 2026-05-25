@@ -29,9 +29,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(speech_router,        prefix="/speech",   tags=["speech"])
-app.include_router(emotion_router,       prefix="/emotion",  tags=["emotion"])
-app.include_router(llm_router,           prefix="/feedback", tags=["feedback"])
+app.include_router(speech_router, prefix="/speech", tags=["speech"])
+app.include_router(emotion_router, prefix="/emotion", tags=["emotion"])
+app.include_router(llm_router, prefix="/feedback", tags=["feedback"])
 app.include_router(text_analysis_router, prefix="/analysis", tags=["analysis"])
 
 
