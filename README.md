@@ -23,6 +23,15 @@ docs/       — project proposal and reference documents
 - **Backend:** see [backend/README.md](backend/README.md)
 - **Frontend:** see [frontend/README.md](frontend/README.md)
 
+## Git hooks
+
+Pre-push hooks run lint, formatting, and type checks before any push reaches GitHub. Install them once after cloning:
+
+```bash
+cd frontend
+pnpm install
+```
+
 ## Stack
 
 | Layer | Technology |
