@@ -6,11 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()  # loads backend/.env into os.environ before any service code runs
 
-from services.tone_delivery_analyzer.router import router as emotion_router
-from services.tone_delivery_analyzer.router import startup as emotion_startup
-from services.speech_to_text.router import router as speech_router
-from services.llm.router import router as llm_router
-from services.text_analysis.router import router as text_analysis_router
+from services.tone_delivery_analyzer.router import router as emotion_router  # noqa: E402
+from services.tone_delivery_analyzer.router import startup as emotion_startup  # noqa: E402
+from services.speech_to_text.router import router as speech_router  # noqa: E402
+from services.llm.router import router as llm_router  # noqa: E402
+from services.text_analysis.router import router as text_analysis_router  # noqa: E402
 
 
 @asynccontextmanager
