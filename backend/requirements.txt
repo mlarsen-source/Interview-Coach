@@ -1,0 +1,24 @@
+# Backend dependencies
+# Install with: pip install -r requirements.txt  (venv must be active)
+# Run with:     uvicorn app:app --reload         (from backend/)
+
+# HTTP framework
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9   # required for UploadFile / multipart/form-data
+
+# Environment variable management (.env file in dev)
+python-dotenv>=1.0.0
+
+# Tone/delivery analyzer — Audeering wav2vec2 (runs locally, no API key)
+torch>=2.0.0
+transformers>=4.38.0
+librosa>=0.10.0
+numpy>=1.24.0
+
+# Speech-to-text — OpenAI Whisper API (requires OPENAI_API_KEY)
+openai>=1.0.0
+
+# LLM feedback — Anthropic Claude API (requires ANTHROPIC_API_KEY)
+# openai is already listed above if GPT-4o is used instead
+anthropic>=0.20.0

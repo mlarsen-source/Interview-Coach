@@ -1,0 +1,57 @@
+# ─── Python virtual environment ───────────────────────────────
+# The isolated environment created by `python -m venv venv`.
+# Large, machine-specific, and rebuilt from requirements — never commit.
+venv/
+.venv/
+env/
+
+# ─── Python bytecode cache ────────────────────────────────────
+# Auto-generated compiled files; regenerated on every run.
+__pycache__/
+*.py[cod]
+*.pyc
+
+# ─── Secrets and environment variables ────────────────────────
+# API keys, Hugging Face tokens, etc. NEVER commit these.
+# Once a secret is committed it stays in git history even if deleted later.
+.env
+.env.*
+!.env.example
+*.key
+secrets.json
+
+# ─── Model weights and caches ─────────────────────────────────
+# The ~1GB emotion model is cached in your home dir by Hugging Face,
+# but if any model files land in the project, keep them out of git.
+*.bin
+*.pt
+*.pth
+*.onnx
+.cache/
+hf_cache/
+
+# ─── Audio files ──────────────────────────────────────────────
+# Interview recordings / test clips: large, often personal/private.
+# Remove these lines if you intend to commit a shared sample clip.
+*.wav
+*.mp3
+*.m4a
+*.flac
+*.ogg
+test_clip.wav
+
+# ─── Generated output ─────────────────────────────────────────
+# Any JSON reports, transcripts, or analysis the pipeline produces.
+output/
+*.rttm
+results/
+
+# ─── OS / editor cruft ────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# ─── Logs ─────────────────────────────────────────────────────
+*.log
