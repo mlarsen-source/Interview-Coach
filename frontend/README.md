@@ -20,11 +20,11 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start dev server |
-| `pnpm build` | Production build |
-| `pnpm lint` | Run ESLint |
-| `pnpm format` | Fix formatting |
-| `pnpm format:check` | Check formatting |
-| `pnpm typecheck` | Run TypeScript check |
+| Command             | Description          |
+| ------------------- | -------------------- |
+| `pnpm dev`          | Start dev server     |
+| `pnpm build`        | Production build     |
+| `pnpm lint`         | Run ESLint           |
+| `pnpm format`       | Fix formatting       |
+| `pnpm format:check` | Check formatting     |
+| `pnpm typecheck`    | Run TypeScript check |
