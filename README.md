@@ -18,11 +18,11 @@ Install these once at the OS level before running setup:
 - **pnpm** — `npm install -g pnpm`
 - **ffmpeg** — decodes audio files, installed via your OS package manager:
 
-| Platform | Command |
-|----------|---------|
-| Windows | `choco install ffmpeg` (requires admin terminal) |
-| macOS | `brew install ffmpeg` |
-| Linux | `sudo apt install ffmpeg` |
+| Platform | Command                                          |
+| -------- | ------------------------------------------------ |
+| Windows  | `choco install ffmpeg` (requires admin terminal) |
+| macOS    | `brew install ffmpeg`                            |
+| Linux    | `sudo apt install ffmpeg`                        |
 
 Verify ffmpeg with `ffmpeg -version` after installing. On Windows, restart the terminal first so the PATH updates.
 
@@ -106,12 +106,12 @@ docs/       — project proposal and reference documents
 
 ## Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js (React) |
-| Backend | FastAPI (Python) |
-| Speech-to-text | OpenAI Whisper API |
-| Tone/delivery | audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim (local) |
-| Feedback | Claude or GPT-4o (API) |
-| Frontend deploy | Vercel |
-| Backend deploy | Render or Fly.io |
+| Layer           | Technology                                                    |
+| --------------- | ------------------------------------------------------------- |
+| Frontend        | Next.js (React)                                               |
+| Backend         | FastAPI (Python)                                              |
+| Speech-to-text  | OpenAI Whisper API                                            |
+| Tone/delivery   | audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim (local) |
+| Feedback        | Claude or GPT-4o (API)                                        |
+| Frontend deploy | Vercel                                                        |
+| Backend deploy  | Render or Fly.io                                              |
