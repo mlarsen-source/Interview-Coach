@@ -59,7 +59,7 @@ cd frontend
 pnpm install
 ```
 
-This also installs the pre-push git hooks via lefthook. Hooks run ESLint, Prettier, and TypeScript checks before any push reaches GitHub.
+This also installs git hooks via lefthook. **Pre-commit** auto-formats staged frontend/backend files; **pre-push** runs ESLint, Prettier check, and TypeScript on the frontend (plus Ruff on the backend).
 
 ## Running the project
 
