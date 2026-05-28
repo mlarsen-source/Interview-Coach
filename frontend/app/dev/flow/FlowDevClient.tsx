@@ -32,9 +32,7 @@ function cloneStages(): PipelineStage[] {
 export function FlowDevClient() {
   const [stages, setStages] = useState<PipelineStage[]>(cloneStages);
   const [stepIndex, setStepIndex] = useState(-1);
-  const [sessionResult, setSessionResult] = useState<SessionReviewResult | null>(
-    null,
-  );
+  const [sessionResult, setSessionResult] = useState<SessionReviewResult | null>(null);
 
   const canAdvance = stepIndex < stages.length - 1;
   const isComplete = stepIndex >= stages.length - 1;
@@ -138,8 +136,7 @@ export function FlowDevClient() {
   }, []);
 
   const loadingFlags = useMemo(() => {
-    const done = (id: PipelineStage["id"]) =>
-      stages.find((s) => s.id === id)?.status === "done";
+    const done = (id: PipelineStage["id"]) => stages.find((s) => s.id === id)?.status === "done";
     return {
       loadingDelivery: !done("audioScores"),
       loadingTranscriptScores: !done("transcriptScores"),
@@ -150,12 +147,7 @@ export function FlowDevClient() {
   return (
     <div className={styles.layout}>
       <div className={styles.controls}>
-        <button
-          type="button"
-          className={styles.button}
-          onClick={advance}
-          disabled={!canAdvance}
-        >
+        <button type="button" className={styles.button} onClick={advance} disabled={!canAdvance}>
           Advance one stage
         </button>
         <button type="button" className={styles.buttonSecondary} onClick={reset}>
@@ -180,9 +172,7 @@ export function FlowDevClient() {
         <ScorecardPanel
           result={sessionResult}
           loadingDelivery={loadingFlags.loadingDelivery && stepIndex >= 0}
-          loadingTranscriptScores={
-            loadingFlags.loadingTranscriptScores && stepIndex >= 0
-          }
+          loadingTranscriptScores={loadingFlags.loadingTranscriptScores && stepIndex >= 0}
           loadingFeedback={loadingFlags.loadingFeedback && stepIndex >= 0}
         />
       </section>

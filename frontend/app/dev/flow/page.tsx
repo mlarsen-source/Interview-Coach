@@ -11,9 +11,9 @@ export default function FlowDevPage() {
         </Link>
         <h1 className="text-2xl font-semibold">Pipeline flow (dev)</h1>
         <p className="text-sm leading-relaxed opacity-70">
-          Step through mocked pipeline stages. Each card shows input/output JSON as
-          data would move between browser, Whisper, emotion model, transcript
-          classifier, aggregator, LLM, and scorecard UI.
+          Step through mocked pipeline stages. Each card shows input/output JSON as data would move
+          between browser, Whisper, emotion model, transcript classifier, aggregator, LLM, and
+          scorecard UI.
         </p>
       </header>
       <FlowDevClient />

@@ -131,7 +131,10 @@ Run from `frontend/` unless noted.
 
 Install hooks: `pnpm install` (runs `lefthook install` via `prepare`).
 
-Pre-push hooks (repo root `lefthook.yml`): ESLint, Prettier check, and TypeScript on the frontend; Ruff on the backend. Set `LEFTHOOK=0` to skip in CI if needed.
+Git hooks (repo root `lefthook.yml`):
+
+- **pre-commit:** Prettier and Ruff format **staged** files and re-stage fixes (`stage_fixed: true`) — formatting is applied before the commit lands.
+- **pre-push:** ESLint, Prettier check, and TypeScript on the frontend; Ruff check/format on the backend (catches `--no-verify` commits). Set `LEFTHOOK=0` to skip in CI if needed.
 
 Script reference: [frontend/README.md](./README.md).
 
@@ -240,7 +243,7 @@ External links may use `<a>` with `target="_blank"` and `rel="noopener noreferre
 ## Git conventions
 
 - Ask before committing or pushing.
-- Pre-push: lefthook runs frontend lint, format check, and typecheck (see `lefthook.yml` at repo root).
+- Hooks: pre-commit auto-formats staged files; pre-push runs lint, format check, and typecheck (see `lefthook.yml` at repo root).
 - Keep commits focused; match existing message style on the branch when one exists.
 
 ---

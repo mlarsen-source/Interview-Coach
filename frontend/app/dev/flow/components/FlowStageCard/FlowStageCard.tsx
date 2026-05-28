@@ -34,9 +34,7 @@ export function FlowStageCard({ stage }: FlowStageCardProps) {
           </h2>
           <p className={styles.description}>{stage.description}</p>
         </div>
-        <span className={`${styles.status} ${STATUS_CLASS[stage.status]}`}>
-          {stage.status}
-        </span>
+        <span className={`${styles.status} ${STATUS_CLASS[stage.status]}`}>{stage.status}</span>
       </header>
       <div className={styles.payloads}>
         <JsonPayloadBlock label="Input" data={stage.input} />

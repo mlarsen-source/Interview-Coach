@@ -11,8 +11,8 @@ export default function Home() {
           Practice answers. Get structured feedback.
         </h1>
         <p className="text-sm leading-relaxed opacity-70">
-          Frontend shells for the scorecard and pipeline are ready for integration.
-          Use the dev flow page to watch mock data move through each stage.
+          Frontend shells for the scorecard and pipeline are ready for integration. Use the dev flow
+          page to watch mock data move through each stage.
         </p>
       </header>
       <nav className="flex flex-col gap-3 sm:flex-row">

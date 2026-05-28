@@ -17,9 +17,21 @@ export const mockQuestion: InterviewQuestion = {
 export const mockTranscript: Transcript = {
   text: "Last year our design and engineering leads disagreed on scope for a launch. I set up a short working session, mapped tradeoffs on a whiteboard, and proposed a phased rollout. We shipped on time and both teams felt heard.",
   segments: [
-    { start: 0, end: 4.2, text: "Last year our design and engineering leads disagreed on scope for a launch." },
-    { start: 4.2, end: 9.8, text: "I set up a short working session, mapped tradeoffs on a whiteboard," },
-    { start: 9.8, end: 15.1, text: "and proposed a phased rollout. We shipped on time and both teams felt heard." },
+    {
+      start: 0,
+      end: 4.2,
+      text: "Last year our design and engineering leads disagreed on scope for a launch.",
+    },
+    {
+      start: 4.2,
+      end: 9.8,
+      text: "I set up a short working session, mapped tradeoffs on a whiteboard,",
+    },
+    {
+      start: 9.8,
+      end: 15.1,
+      text: "and proposed a phased rollout. We shipped on time and both teams felt heard.",
+    },
   ],
 };
 
@@ -39,10 +51,7 @@ export const mockTranscriptScores: TranscriptFeedbackScores = {
 export const mockQualitativeFeedback: QualitativeFeedback = {
   summary:
     "Strong STAR-style story with a clear outcome. Delivery reads as measured but engaged; tighten the opening hook.",
-  strengths: [
-    "Concrete situation and actions",
-    "Credible outcome with team alignment",
-  ],
+  strengths: ["Concrete situation and actions", "Credible outcome with team alignment"],
   improvements: [
     "Lead with your role in one sentence",
     "Quantify impact if possible (timeline, metrics)",

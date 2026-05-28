@@ -43,19 +43,12 @@ export function Scorecard({
       {showShellBadge ? <span className={styles.shellBadge}>UI shell</span> : null}
       <header className={styles.header}>
         <p className={styles.eyebrow}>Question</p>
-        <h1 className={styles.question}>
-          {question?.prompt ?? "No question selected"}
-        </h1>
-        {transcript ? (
-          <p className={styles.transcript}>{transcript.text}</p>
-        ) : null}
+        <h1 className={styles.question}>{question?.prompt ?? "No question selected"}</h1>
+        {transcript ? <p className={styles.transcript}>{transcript.text}</p> : null}
       </header>
       <div className={styles.scoresRow}>
         <DeliveryScores loading={loadingDelivery} scores={deliveryScores} />
-        <TranscriptFeedbackScores
-          loading={loadingTranscriptScores}
-          scores={transcriptScores}
-        />
+        <TranscriptFeedbackScores loading={loadingTranscriptScores} scores={transcriptScores} />
       </div>
       <div className={styles.feedbackColumn}>
         <QualitativeFeedback loading={loadingFeedback} feedback={feedback} />
