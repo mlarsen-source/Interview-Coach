@@ -30,16 +30,16 @@ The frontend is responsible for capture UX, calling backend APIs, loading states
 
 ### Tech stack
 
-| Area            | Technology                                      |
-| --------------- | ----------------------------------------------- |
-| Framework       | Next.js 16 (App Router)                         |
-| Language        | TypeScript (`strict`)                           |
-| UI              | React 19, Tailwind CSS 4                        |
-| Package manager | pnpm                                            |
-| Lint / format   | ESLint (`eslint-config-next`), Prettier         |
+| Area            | Technology                                                  |
+| --------------- | ----------------------------------------------------------- |
+| Framework       | Next.js 16 (App Router)                                     |
+| Language        | TypeScript (`strict`)                                       |
+| UI              | React 19, Tailwind CSS 4                                    |
+| Package manager | pnpm                                                        |
+| Lint / format   | ESLint (`eslint-config-next`), Prettier                     |
 | Component docs  | Storybook (dependency present; add scripts when configured) |
-| Git hooks       | lefthook (installed via `pnpm install` prepare) |
-| Deploy          | Vercel (planned)                                |
+| Git hooks       | lefthook (installed via `pnpm install` prepare)             |
+| Deploy          | Vercel (planned)                                            |
 
 **Not in this repo (backend only):** FastAPI, Whisper, wav2vec2 emotion model, Claude/GPT feedback. See [backend/README.md](../backend/README.md).
 
@@ -83,13 +83,13 @@ Prefer feature folders (e.g. `app/record/`, `app/scorecard/`) with colocated com
 - **Base URL (local):** `http://localhost:8000`
 - **Interactive docs:** `http://localhost:8000/docs`
 
-| Method | Path                    | Status | Purpose                                      |
-| ------ | ----------------------- | ------ | -------------------------------------------- |
-| GET    | `/health`               | done   | Liveness                                     |
-| GET    | `/emotion/health`       | done   | Emotion model loaded                         |
-| POST   | `/emotion/analyze`      | done   | Audio file → arousal, dominance, valence     |
-| POST   | `/speech/transcribe`    | todo   | Audio → transcript + word timestamps         |
-| POST   | `/feedback/generate`    | todo   | Transcript + scores + question → feedback    |
+| Method | Path                 | Status | Purpose                                   |
+| ------ | -------------------- | ------ | ----------------------------------------- |
+| GET    | `/health`            | done   | Liveness                                  |
+| GET    | `/emotion/health`    | done   | Emotion model loaded                      |
+| POST   | `/emotion/analyze`   | done   | Audio file → arousal, dominance, valence  |
+| POST   | `/speech/transcribe` | todo   | Audio → transcript + word timestamps      |
+| POST   | `/feedback/generate` | todo   | Transcript + scores + question → feedback |
 
 Call these from the browser via `fetch` (or a small client module). Do not reimplement ML or LLM logic in the frontend. Use env-based API base URLs when wiring production (e.g. `NEXT_PUBLIC_API_URL`).
 
@@ -119,15 +119,15 @@ Audio capture must produce a format the backend accepts (follow backend service 
 
 Run from `frontend/` unless noted.
 
-| Task         | Command              |
-| ------------ | -------------------- |
-| Dev server   | `pnpm dev` → :3000   |
-| Production   | `pnpm build`         |
-| Start prod   | `pnpm start`         |
-| Lint         | `pnpm lint`          |
-| Type check   | `pnpm typecheck`     |
-| Format       | `pnpm format`        |
-| Format check | `pnpm format:check`  |
+| Task         | Command             |
+| ------------ | ------------------- |
+| Dev server   | `pnpm dev` → :3000  |
+| Production   | `pnpm build`        |
+| Start prod   | `pnpm start`        |
+| Lint         | `pnpm lint`         |
+| Type check   | `pnpm typecheck`    |
+| Format       | `pnpm format`       |
+| Format check | `pnpm format:check` |
 
 Install hooks: `pnpm install` (runs `lefthook install` via `prepare`).
 
@@ -143,9 +143,9 @@ Backend keys live in **`backend/.env`** (gitignored): `OPENAI_API_KEY`, `ANTHROP
 
 When the UI calls the API across environments, add frontend vars as needed, for example:
 
-| Variable               | Purpose                          |
-| ---------------------- | -------------------------------- |
-| `NEXT_PUBLIC_API_URL`  | FastAPI base URL (e.g. production) |
+| Variable              | Purpose                            |
+| --------------------- | ---------------------------------- |
+| `NEXT_PUBLIC_API_URL` | FastAPI base URL (e.g. production) |
 
 Use a local default of `http://localhost:8000` in development when the var is unset.
 
@@ -264,14 +264,14 @@ External links may use `<a>` with `target="_blank"` and `rel="noopener noreferre
 
 ## Key references
 
-| Topic              | Location                                      |
-| ------------------ | --------------------------------------------- |
-| Full stack setup   | [../README.md](../README.md)                  |
-| Backend endpoints  | [../backend/README.md](../backend/README.md)  |
-| Emotion model      | [../backend/services/tone_delivery_analyzer/README.md](../backend/services/tone_delivery_analyzer/README.md) |
-| Frontend scripts   | [README.md](./README.md)                      |
+| Topic                         | Location                                                                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Full stack setup              | [../README.md](../README.md)                                                                                                   |
+| Backend endpoints             | [../backend/README.md](../backend/README.md)                                                                                   |
+| Emotion model                 | [../backend/services/tone_delivery_analyzer/README.md](../backend/services/tone_delivery_analyzer/README.md)                   |
+| Frontend scripts              | [README.md](./README.md)                                                                                                       |
 | CSS/component review workflow | [../docs/agent-workflows/css-and-component-standards-review.md](../docs/agent-workflows/css-and-component-standards-review.md) |
-| Agent workflows    | [../docs/agent-workflows/](../docs/agent-workflows/) |
+| Agent workflows               | [../docs/agent-workflows/](../docs/agent-workflows/)                                                                           |
 
 ---
 
@@ -293,15 +293,15 @@ Use docs/agent-workflows/pull-request-description-generator.md for this branch.
 
 See [docs/agent-workflows/README.md](../docs/agent-workflows/README.md) for the full list.
 
-| Workflow | Use when |
-| -------- | -------- |
-| `pre-merge-full-review.md` | Full pre-merge review with phase gates |
-| `branch-change-impact-audit.md` | What changed and regression risks vs `main` |
-| `code-quality-review.md` | Correctness, conventions, API integration |
-| `css-and-component-standards-review.md` | module.css, Tailwind placement, Storybook |
-| `test-suite-quality-review.md` | Test simplicity (or Storybook if no tests yet) |
-| `manual-qa-checklist-generator.md` | Manual QA for recording/scorecard flows |
-| `pull-request-description-generator.md` | PR title and description from diff |
-| `feature-implementation-planning.md` | Plan before non-trivial features |
-| `feature-flag-gating-review.md` | Env/flag gating completeness |
-| `figma-design-to-code.md` | Implement UI from Figma |
+| Workflow                                | Use when                                       |
+| --------------------------------------- | ---------------------------------------------- |
+| `pre-merge-full-review.md`              | Full pre-merge review with phase gates         |
+| `branch-change-impact-audit.md`         | What changed and regression risks vs `main`    |
+| `code-quality-review.md`                | Correctness, conventions, API integration      |
+| `css-and-component-standards-review.md` | module.css, Tailwind placement, Storybook      |
+| `test-suite-quality-review.md`          | Test simplicity (or Storybook if no tests yet) |
+| `manual-qa-checklist-generator.md`      | Manual QA for recording/scorecard flows        |
+| `pull-request-description-generator.md` | PR title and description from diff             |
+| `feature-implementation-planning.md`    | Plan before non-trivial features               |
+| `feature-flag-gating-review.md`         | Env/flag gating completeness                   |
+| `figma-design-to-code.md`               | Implement UI from Figma                        |
