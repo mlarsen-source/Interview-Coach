@@ -1,0 +1,62 @@
+.root {
+  border: 1px dashed var(--foreground);
+  border-opacity: 0.2;
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+}
+
+.title {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.summary {
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.sectionTitle {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.list {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+}
+
+.list:last-child {
+  margin-bottom: 0;
+}
+
+.placeholder {
+  margin: 0;
+  font-size: 0.875rem;
+  opacity: 0.55;
+  font-style: italic;
+}
+
+.skeletonLine {
+  height: 0.875rem;
+  margin-bottom: 0.5rem;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+.skeletonLineShort {
+  height: 0.875rem;
+  width: 70%;
+  margin-bottom: 0.5rem;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+.skeletonLine:last-child {
+  margin-bottom: 0;
+}
