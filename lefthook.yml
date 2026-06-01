@@ -21,7 +21,7 @@ pre-push:
       run: pnpm lint
     frontend-format:
       root: frontend/
-      run: pnpm format:check
+      run: pnpm format
     frontend-typecheck:
       root: frontend/
       run: pnpm typecheck
