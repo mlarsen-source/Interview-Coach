@@ -1,0 +1,92 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+}
+
+.rootIdle {
+  opacity: 0.55;
+}
+
+.rootPending {
+  border-color: color-mix(in srgb, #3b82f6 50%, transparent);
+}
+
+.rootDone {
+  border-color: color-mix(in srgb, #22c55e 45%, transparent);
+}
+
+.rootError {
+  border-color: color-mix(in srgb, #ef4444 50%, transparent);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.description {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  opacity: 0.65;
+  line-height: 1.4;
+}
+
+.status {
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-family: var(--font-mono), monospace;
+}
+
+.statusIdle {
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+.statusPending {
+  background: color-mix(in srgb, #3b82f6 20%, transparent);
+  color: #2563eb;
+}
+
+.statusDone {
+  background: color-mix(in srgb, #22c55e 20%, transparent);
+  color: #15803d;
+}
+
+.statusError {
+  background: color-mix(in srgb, #ef4444 20%, transparent);
+  color: #b91c1c;
+}
+
+.payloads {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .payloads {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.error {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #b91c1c;
+}

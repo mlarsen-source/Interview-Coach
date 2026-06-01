@@ -1,3 +1,19 @@
+# Auto-format on commit (re-stages fixes). Pre-push still verifies so skipped hooks are caught.
+pre-commit:
+  parallel: true
+  commands:
+    frontend-format:
+      root: frontend/
+      glob: "**/*.{js,ts,jsx,tsx,mjs,cjs,json,css,md}"
+      exclude: "(package-lock\\.json|pnpm-lock\\.yaml)"
+      run: pnpm exec prettier --write {staged_files}
+      stage_fixed: true
+    backend-format:
+      root: backend/
+      glob: "**/*.py"
+      run: ruff format {staged_files}
+      stage_fixed: true
+
 pre-push:
   commands:
     frontend-lint:

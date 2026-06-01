@@ -1,0 +1,70 @@
+.root {
+  border: 1px dashed var(--foreground);
+  border-opacity: 0.2;
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+}
+
+.title {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.label {
+  font-size: 0.75rem;
+  opacity: 0.65;
+}
+
+.value {
+  font-family: var(--font-mono), monospace;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.placeholder {
+  margin: 0;
+  font-size: 0.875rem;
+  opacity: 0.55;
+  font-style: italic;
+}
+
+.skeletonBar {
+  height: 1.125rem;
+  width: 3rem;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--foreground) 12%, transparent);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
