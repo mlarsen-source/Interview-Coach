@@ -6,7 +6,7 @@ Reviews the **quality and simplicity of the existing test suite** — whether te
 
 **Does not:** check for test coverage gaps in newly written code (that is handled by `code-quality-review.md`). Does not run tests or generate new tests. Scope is existing test quality only, not coverage metrics.
 
-**Note:** Interview Coach may not have a frontend test runner configured yet. If no tests exist, state that plainly and limit the review to Storybook story quality per `frontend/AGENTS.md` when `.stories.tsx` files are in scope.
+**Note:** Interview Coach may not have a frontend test runner configured yet. If no tests exist, state that plainly and limit the review to Storybook story quality per `AGENTS.md` when `.stories.tsx` files are in scope.
 
 ---
 

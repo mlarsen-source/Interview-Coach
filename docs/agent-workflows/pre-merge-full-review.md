@@ -323,7 +323,7 @@ Each phase's sub-workflow doc may add more, but at minimum every phase runs thes
 - Pattern check on changed lines only:
   - New `console.log`, `console.error`, `console.warn` not gated by debug flag → finding.
   - New `// @ts-ignore`, `// @ts-expect-error`, `// eslint-disable-*` without a comment explaining why → finding.
-  - New `any` types in TypeScript files → finding (unless project conventions in `frontend/AGENTS.md` say otherwise).
+  - New `any` types in TypeScript files → finding (unless project conventions in `AGENTS.md` say otherwise).
   - New `TODO`, `FIXME`, `XXX` comments → subjective observation (variable severity).
   - New `fetch(` calls in non-test source files: grep the surrounding call site (within ~5 lines) for `signal:`. If absent → finding. Title: "fetch without abort signal". Recommended fix: add an `AbortController` with an appropriate timeout and pass `signal: controller.signal`. Impact if not fixed: a slow or hung upstream can hold the server request open until the platform timeout. Exception: calls inside test files, or calls where the surrounding function signature already accepts and threads a signal from the caller.
 - Build the project if a build command exists (`pnpm build` or equivalent). Build failure → finding.
@@ -439,7 +439,7 @@ The principle: silence is the default for unchanged code. Speak about adjacent c
 
 ## Before starting
 
-1. Read `frontend/AGENTS.md` and the root [README.md](../../README.md) to load conventions, hard rules, and architecture.
+1. Read `AGENTS.md` and the root [README.md](../../README.md) to load conventions, hard rules, and architecture.
 
 2. **Optional issue reference.** If the branch or commits reference a GitHub issue (e.g. `#12` in the branch name), record it for Phase 6 (PR description). No fixed Jira prefix is required for this project.
 

@@ -1,0 +1,132 @@
+.page {
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+  font-family: monospace;
+}
+
+.controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.startBtn {
+  padding: 0.6rem 1.4rem;
+  background: var(--color-success-alt);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.startBtn:disabled {
+  background: var(--color-muted);
+  cursor: not-allowed;
+}
+
+.stopBtn {
+  padding: 0.6rem 1.4rem;
+  background: var(--color-danger-alt);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.stopBtn:disabled {
+  background: var(--color-muted);
+  cursor: not-allowed;
+}
+
+.status {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.recording {
+  color: var(--color-danger-alt);
+  font-weight: bold;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.panel {
+  background: var(--color-surface-dark);
+  color: var(--color-text-muted);
+  border-radius: 8px;
+  padding: 1rem;
+  min-height: 400px;
+  overflow-y: auto;
+}
+
+.panelTitle {
+  font-size: 0.75rem;
+  color: var(--color-muted-light);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.75rem;
+}
+
+.chunkEntry {
+  border-top: 1px solid var(--color-border-surface);
+  padding: 0.6rem 0;
+  font-size: 0.8rem;
+}
+
+.chunkEntry:first-of-type {
+  border-top: none;
+}
+
+.chunkLabel {
+  color: var(--color-muted);
+  margin-bottom: 0.25rem;
+}
+
+.chunkPending {
+  color: var(--color-warning);
+}
+
+.chunkError {
+  color: var(--color-text-error);
+}
+
+.segment {
+  margin: 0.4rem 0;
+  padding: 0.4rem 0.6rem;
+  background: var(--color-surface);
+  border-radius: 4px;
+  line-height: 1.5;
+}
+
+.segmentTime {
+  color: var(--color-text-accent);
+  font-size: 0.72rem;
+  margin-bottom: 0.15rem;
+}
+
+.segmentText {
+  color: var(--color-text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.scores {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.7rem;
+  color: var(--color-text-score);
+}
+
+.empty {
+  color: var(--color-muted-faint);
+  font-size: 0.85rem;
+  margin-top: 2rem;
+  text-align: center;
+}

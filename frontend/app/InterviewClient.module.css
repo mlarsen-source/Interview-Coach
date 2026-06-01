@@ -1,0 +1,226 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  gap: 2rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 680px;
+  background: var(--color-card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.4;
+}
+
+.question {
+  font-size: 1.2rem;
+  line-height: 1.65;
+  font-weight: 500;
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  min-height: 1.5rem;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.dot.playing {
+  background: var(--color-info);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.dot.recording {
+  background: var(--color-danger);
+  animation: pulse 0.8s ease-in-out infinite;
+}
+
+.dot.processing {
+  background: var(--color-warning);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.dot.done {
+  background: var(--color-success);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btnPrimary {
+  padding: 0.6rem 1.4rem;
+  background: #fff;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnPrimary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btnSecondary {
+  padding: 0.6rem 1.4rem;
+  background: transparent;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btnSecondary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btnDanger {
+  padding: 0.6rem 1.4rem;
+  background: var(--color-danger);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.segments {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.segment {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.segmentTime {
+  font-size: 0.68rem;
+  opacity: 0.4;
+  margin-bottom: 0.2rem;
+  font-family: monospace;
+}
+
+.segmentScores {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.3rem;
+  font-size: 0.72rem;
+  font-family: monospace;
+  color: var(--color-text-score);
+}
+
+.interviewerRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.interviewerLabel {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  opacity: 0.5;
+  white-space: nowrap;
+}
+
+.interviewerSelect {
+  flex: 1;
+  background: var(--color-surface);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 0.88rem;
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+}
+
+.interviewerSelect option {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.interviewerSelect:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.questionPlaceholder {
+  font-size: 1rem;
+  opacity: 0.35;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.donePrompt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  font-size: 0.9rem;
+}
+
+.promptActions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+}

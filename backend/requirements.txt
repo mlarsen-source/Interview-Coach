@@ -16,7 +16,10 @@ transformers>=4.38.0
 librosa>=0.10.0
 numpy>=1.24.0
 
-# Speech-to-text — OpenAI Whisper API (requires OPENAI_API_KEY)
+# Speech-to-text — Groq Whisper API (requires GROQ_API_KEY)
+groq>=0.9.0
+
+# OpenAI SDK — reserved for fallback / embeddings if needed
 openai>=1.0.0
 
 # LLM feedback — Anthropic Claude API (requires ANTHROPIC_API_KEY)

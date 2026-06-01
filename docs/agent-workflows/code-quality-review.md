@@ -19,7 +19,7 @@ Perform a strict, scoped code quality review of a feature branch.
 
 ## Before review
 
-- Read `frontend/AGENTS.md` (and [README.md](../../README.md) for full-stack context) to load project conventions, hard rules, and architecture patterns
+- Read `AGENTS.md` (and [README.md](../../README.md) for full-stack context) to load project conventions, hard rules, and architecture patterns
 - Read commit messages or the PR description to understand the intent of the changes
 - Run `git diff --name-only origin/main...HEAD` to enumerate changed files (substitute the confirmed target branch if not `main`)
 - Read all changed files
@@ -84,7 +84,7 @@ Decision rule:
 Check for:
 
 - environment-dependent code without fallbacks or validation
-- environment variables used for a purpose that does not match their semantic role (e.g. a backend-only API key referenced in client code, or `NEXT_PUBLIC_*` used for secrets) — cross-reference against `frontend/AGENTS.md` and the root README; backend keys belong in `backend/.env` only
+- environment variables used for a purpose that does not match their semantic role (e.g. a backend-only API key referenced in client code, or `NEXT_PUBLIC_*` used for secrets) — cross-reference against `AGENTS.md` and the root README; backend keys belong in `backend/.env` only
 - build-time versus runtime mismatches
 - hardcoded values that should come from configuration
 - unnecessary large imports for small utilities
@@ -112,7 +112,7 @@ Decision rule:
 
 ### 5. Convention compliance
 
-Check changed code against project conventions in `frontend/AGENTS.md`, specifically:
+Check changed code against project conventions in `AGENTS.md`, specifically:
 
 - Duplicating backend pipeline logic (Whisper, emotion model, LLM) in the frontend instead of calling FastAPI endpoints
 - API keys or secrets in client bundles (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY` belong in `backend/.env` only)
@@ -157,7 +157,7 @@ For new `fetch` wrappers or API client modules, flag missing tests only when a t
 
 Decision rule:
 
-- Only flag missing coverage if it would realistically catch a regression in the changed code. This project may not have a frontend test script yet — if `pnpm test` is not configured, note that and limit findings to Storybook/state coverage per `frontend/AGENTS.md`.
+- Only flag missing coverage if it would realistically catch a regression in the changed code. This project may not have a frontend test script yet — if `pnpm test` is not configured, note that and limit findings to Storybook/state coverage per `AGENTS.md`.
 
 ### 8. Comments
 

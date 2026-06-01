@@ -3,6 +3,26 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Semantic color tokens */
+  --color-surface: #1f2937;
+  --color-surface-dark: #111;
+  --color-muted: #6b7280;
+  --color-muted-light: #9ca3af;
+  --color-muted-faint: #4b5563;
+  --color-danger: #ef4444;
+  --color-danger-alt: #dc2626;
+  --color-success: #22c55e;
+  --color-success-alt: #16a34a;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+  --color-text-primary: #f3f4f6;
+  --color-text-muted: #e5e7eb;
+  --color-text-accent: #60a5fa;
+  --color-text-score: #a3e635;
+  --color-text-error: #f87171;
+  --color-border-surface: #374151;
+  --color-card: #18181b;
 }
 
 @theme inline {
