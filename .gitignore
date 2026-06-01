@@ -145,3 +145,5 @@ vite.config.ts.timestamp-*
 # Python virtual environment
 venv/
 .venv/
+.DS_Store
+docs/.DS_Store
