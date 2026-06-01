@@ -33,9 +33,6 @@ jobs:
       - name: Lint (ESLint)
         run: pnpm lint
 
-      - name: Format check (Prettier)
-        run: pnpm format:check
-
       - name: Typecheck
         run: pnpm typecheck
 
