@@ -4,7 +4,7 @@
 
 Guides **implementation of UI from a Figma design** — extracting designs via MCP tools, adapting reference code to the Interview Coach frontend stack, mapping design tokens to `app/globals.css`, and verifying component compliance before marking work complete.
 
-**Does not:** review existing code, perform standalone CSS review, or assess code quality independently of a design task. Styling and component standards are defined in `frontend/AGENTS.md` and `css-and-component-standards-review.md` — this workflow references those standards rather than restating them.
+**Does not:** review existing code, perform standalone CSS review, or assess code quality independently of a design task. Styling and component standards are defined in `AGENTS.md` and `css-and-component-standards-review.md` — this workflow references those standards rather than restating them.
 
 ---
 
@@ -62,7 +62,7 @@ The MCP reference output is generic React + Tailwind. Before implementing:
 - [ ] Recording/scorecard UI uses presentational components with mock-friendly props for Storybook
 - [ ] No backend secrets in client code; API calls go through the FastAPI client module
 
-There is no shared `app/components/ui/` library yet — reuse existing components in the branch or create new ones with `.module.css` + `.stories.tsx` per `frontend/AGENTS.md`.
+There is no shared `app/components/ui/` library yet — reuse existing components in the branch or create new ones with `.module.css` + `.stories.tsx` per `AGENTS.md`.
 
 ### Step 3 — Map design tokens
 
@@ -81,7 +81,7 @@ Wait for user confirmation when reuse vs new component is ambiguous.
 
 ### Step 5 — Implement
 
-Follow `frontend/AGENTS.md` and `css-and-component-standards-review.md` for file layout, Storybook states (recording, processing, scorecard, errors), and presentational/container split.
+Follow `AGENTS.md` and `css-and-component-standards-review.md` for file layout, Storybook states (recording, processing, scorecard, errors), and presentational/container split.
 
 **Responsive:** Ask how breakpoints should behave; do not infer from fixed-width Figma frames.
 

@@ -39,7 +39,7 @@ Group files by category such as:
 - presentational components + containers + `*.module.css` + `*.stories.tsx`
 - App Router pages (`app/`)
 - tests (when test runner exists)
-- docs (`backend/README.md`, `frontend/AGENTS.md` if conventions change)
+- docs (`backend/README.md`, `AGENTS.md` if conventions change)
 
 ## Usage
 

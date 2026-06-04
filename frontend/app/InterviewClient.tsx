@@ -1,0 +1,370 @@
+"use client";
+
+import { useCallback, useRef, useState } from "react";
+import {
+  INTRO_QUESTION,
+  pickRandomQuestion,
+  type InterviewQuestion,
+} from "@/lib/prompts/questions";
+import { INTERVIEWERS, DEFAULT_INTERVIEWER, type Interviewer } from "@/lib/prompts/interviewers";
+import styles from "./InterviewClient.module.css";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const CHUNK_INTERVAL_MS = 15_000;
+const SILENCE_THRESHOLD = 0.015;
+const SILENCE_BEFORE_PROMPT_MS = 3_000;
+const SILENCE_AFTER_PROMPT_MS = 8_000;
+
+type Stage = "idle" | "playing" | "recording" | "processing" | "done";
+
+interface Segment {
+  start: number;
+  end: number;
+  text: string;
+  arousal: number;
+  dominance: number;
+  valence: number;
+}
+
+function buildIntro(interviewer: Interviewer): string {
+  return `Hi there, welcome. I'm ${interviewer.name}, ${interviewer.title}. Thank you so much for coming in today — we're really glad to have you. Let's go ahead and get started.`;
+}
+
+async function speakWithGroq(text: string, voice: string, signal: AbortSignal): Promise<void> {
+  const res = await fetch(`${API_BASE}/speech/tts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, voice }),
+    signal,
+  });
+  if (!res.ok) throw new Error(`TTS ${res.status}`);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  return new Promise((resolve, reject) => {
+    const audio = new Audio(url);
+    audio.onended = () => {
+      URL.revokeObjectURL(url);
+      resolve();
+    };
+    audio.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Audio playback failed"));
+    };
+    audio.play();
+  });
+}
+
+export default function InterviewClient() {
+  const [interviewer, setInterviewer] = useState<Interviewer>(DEFAULT_INTERVIEWER);
+  const [question, setQuestion] = useState<InterviewQuestion | null>(null);
+  const [questionNumber, setQuestionNumber] = useState(0);
+  const [stage, setStage] = useState<Stage>("idle");
+  const [showQuestion, setShowQuestion] = useState(false);
+  const [showDonePrompt, setShowDonePrompt] = useState(false);
+  const [segments, setSegments] = useState<Segment[]>([]);
+  const [statusText, setStatusText] = useState(
+    "Select your interviewer and press Start Interview."
+  );
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const accumulatedRef = useRef<Blob[]>([]);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasSpokeRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const usedIdsRef = useRef<Set<number>>(new Set());
+
+  const newAbort = useCallback((): AbortSignal => {
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    return ctrl.signal;
+  }, []);
+
+  const clearTimers = useCallback(() => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    if (autoStopTimerRef.current) {
+      clearTimeout(autoStopTimerRef.current);
+      autoStopTimerRef.current = null;
+    }
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    clearTimers();
+    setShowDonePrompt(false);
+    mediaRecorderRef.current?.stop();
+    mediaRecorderRef.current?.stream.getTracks().forEach((t) => t.stop());
+    audioCtxRef.current?.close();
+    audioCtxRef.current = null;
+  }, [clearTimers]);
+
+  const sendAudio = useCallback(
+    async (blob: Blob) => {
+      setStage("processing");
+      setStatusText("Transcribing and scoring your answer…");
+      const form = new FormData();
+      form.append("file", blob, "answer.webm");
+      const signal = newAbort();
+      try {
+        const res = await fetch(`${API_BASE}/speech/transcribe`, {
+          method: "POST",
+          body: form,
+          signal,
+        });
+        if (!res.ok) throw new Error(`${res.status}`);
+        const data: Segment[] = await res.json();
+        setSegments(data);
+        setStage("done");
+        setStatusText("Answer received. Review your response or move to the next question.");
+      } catch (err) {
+        setStatusText(`Error: ${err}. Try again.`);
+        setStage("idle");
+      }
+    },
+    [newAbort]
+  );
+
+  const startRecording = useCallback(async () => {
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      alert("Microphone access denied.");
+      setStage("idle");
+      return;
+    }
+
+    accumulatedRef.current = [];
+    hasSpokeRef.current = false;
+    const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
+    mediaRecorderRef.current = mr;
+
+    const ctx = new AudioContext();
+    audioCtxRef.current = ctx;
+    const source = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 512;
+    source.connect(analyser);
+    const buf = new Float32Array(analyser.fftSize);
+
+    const showPrompt = () => {
+      setShowDonePrompt(true);
+      setStatusText("It looks like you've paused. Are you finished answering?");
+      autoStopTimerRef.current = setTimeout(() => stopRecording(), SILENCE_AFTER_PROMPT_MS);
+    };
+
+    const checkSilence = () => {
+      if (!audioCtxRef.current) return;
+      analyser.getFloatTimeDomainData(buf);
+      const rms = Math.sqrt(buf.reduce((s, v) => s + v * v, 0) / buf.length);
+      if (rms >= SILENCE_THRESHOLD) {
+        hasSpokeRef.current = true;
+        setShowDonePrompt(false);
+        clearTimers();
+        setStatusText('Recording… press "I\'m Done Answering" when finished.');
+      } else if (hasSpokeRef.current && !silenceTimerRef.current) {
+        silenceTimerRef.current = setTimeout(showPrompt, SILENCE_BEFORE_PROMPT_MS);
+      }
+      rafRef.current = requestAnimationFrame(checkSilence);
+    };
+    rafRef.current = requestAnimationFrame(checkSilence);
+
+    mr.ondataavailable = (e) => {
+      if (e.data.size > 0) accumulatedRef.current.push(e.data);
+    };
+    mr.onstop = () => {
+      const blob = new Blob(accumulatedRef.current, { type: "audio/webm" });
+      if (blob.size > 0) sendAudio(blob);
+    };
+
+    mr.start(CHUNK_INTERVAL_MS);
+    setStage("recording");
+    setStatusText('Recording… press "I\'m Done Answering" when finished.');
+  }, [sendAudio, stopRecording, clearTimers]);
+
+  const startInterview = useCallback(async () => {
+    usedIdsRef.current.clear();
+    const signal = newAbort();
+    const firstQuestion = INTRO_QUESTION;
+    setQuestion(firstQuestion);
+    setQuestionNumber(1);
+    setSegments([]);
+    setShowQuestion(false);
+    setStage("playing");
+    setStatusText(`${interviewer.name} is introducing themselves…`);
+
+    try {
+      await speakWithGroq(buildIntro(interviewer), interviewer.voice, signal);
+      setStatusText(`${interviewer.name} is asking the first question…`);
+      await speakWithGroq(firstQuestion.text, interviewer.voice, signal);
+    } catch {
+      setStatusText("Could not load audio — check the backend is running.");
+      setStage("idle");
+      return;
+    }
+
+    setShowQuestion(true);
+    startRecording();
+  }, [interviewer, newAbort, startRecording]);
+
+  const nextQuestion = useCallback(async () => {
+    stopRecording();
+    const signal = newAbort();
+    const next = pickRandomQuestion(usedIdsRef.current);
+    setQuestion(next);
+    setQuestionNumber((n) => n + 1);
+    setSegments([]);
+    setShowQuestion(false);
+    setShowDonePrompt(false);
+    setStage("playing");
+    setStatusText(`${interviewer.name} is asking the next question…`);
+
+    try {
+      await speakWithGroq(next.text, interviewer.voice, signal);
+    } catch {
+      setStatusText("Could not load audio — check the backend is running.");
+      setStage("idle");
+      return;
+    }
+
+    setShowQuestion(true);
+    startRecording();
+  }, [interviewer, newAbort, stopRecording, startRecording]);
+
+  const dotClass = [
+    styles.dot,
+    stage === "playing" ? styles.playing : "",
+    stage === "recording" ? styles.recording : "",
+    stage === "processing" ? styles.processing : "",
+    stage === "done" ? styles.done : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.card}>
+        <div className={styles.meta}>
+          <span>Interview Coach</span>
+          {questionNumber > 0 && (
+            <>
+              <span>·</span>
+              <span>Question {questionNumber}</span>
+            </>
+          )}
+        </div>
+
+        {showQuestion && question && <p className={styles.question}>{question.text}</p>}
+
+        {stage === "playing" && !showQuestion && (
+          <p className={styles.questionPlaceholder}>{interviewer.name} is speaking…</p>
+        )}
+
+        <div className={styles.interviewerRow}>
+          <label className={styles.interviewerLabel} htmlFor="interviewer-select">
+            Interviewer
+          </label>
+          <select
+            id="interviewer-select"
+            className={styles.interviewerSelect}
+            value={interviewer.voice}
+            onChange={(e) => {
+              const found = INTERVIEWERS.find((i) => i.voice === e.target.value);
+              if (found) setInterviewer(found);
+            }}
+            disabled={stage !== "idle"}
+          >
+            {INTERVIEWERS.map((i) => (
+              <option key={i.voice} value={i.voice}>
+                {i.name} — {i.title}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className={styles.divider} />
+
+        <div className={styles.statusRow}>
+          <span className={dotClass} />
+          <span>{statusText}</span>
+        </div>
+
+        {showDonePrompt && (
+          <div className={styles.donePrompt}>
+            <span>It looks like you&apos;ve paused. Are you finished answering?</span>
+            <div className={styles.promptActions}>
+              <button className={styles.btnDanger} onClick={stopRecording}>
+                Yes, I&apos;m Done
+              </button>
+              <button
+                className={styles.btnSecondary}
+                onClick={() => {
+                  clearTimers();
+                  setShowDonePrompt(false);
+                  setStatusText("Recording… continue when ready.");
+                }}
+              >
+                Keep Going
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className={styles.actions}>
+          {stage === "idle" && (
+            <button className={styles.btnPrimary} onClick={startInterview}>
+              Start Interview
+            </button>
+          )}
+
+          {stage === "recording" && !showDonePrompt && (
+            <button className={styles.btnDanger} onClick={stopRecording}>
+              I&apos;m Done Answering
+            </button>
+          )}
+
+          {stage === "done" && (
+            <>
+              <button className={styles.btnPrimary} onClick={nextQuestion}>
+                Next Question
+              </button>
+              <button className={styles.btnSecondary} disabled title="Coming soon">
+                Hear Feedback
+              </button>
+            </>
+          )}
+        </div>
+
+        {segments.length > 0 && (
+          <>
+            <div className={styles.divider} />
+            <div className={styles.segments}>
+              {segments.map((seg, i) => (
+                <div key={i} className={styles.segment}>
+                  <div className={styles.segmentTime}>
+                    {seg.start.toFixed(2)}s – {seg.end.toFixed(2)}s
+                  </div>
+                  <div>{seg.text}</div>
+                  <div className={styles.segmentScores}>
+                    <span>A {seg.arousal.toFixed(2)}</span>
+                    <span>D {seg.dominance.toFixed(2)}</span>
+                    <span>V {seg.valence.toFixed(2)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -12,7 +12,7 @@ Review all styling related to a branch with a strict focus on CSS quality, maint
 
 ## Before review
 
-- Read `frontend/AGENTS.md` to load project styling conventions and hard rules
+- Read `AGENTS.md` to load project styling conventions and hard rules
 - Run `git diff --name-only origin/main...HEAD` to enumerate changed files (substitute the confirmed target branch if not `main`)
 - Read adjacent component styles to understand existing patterns before flagging inconsistencies
 
