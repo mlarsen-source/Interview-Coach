@@ -92,6 +92,9 @@ export const QUESTIONS: InterviewQuestion[] = [
   },
 ];
 
+/** Intro question plus one pass through the full question bank. */
+export const MAX_INTERVIEW_QUESTIONS = 1 + QUESTIONS.length;
+
 export function pickRandomQuestion(usedIds: Set<number>): InterviewQuestion {
   const available = QUESTIONS.filter((q) => !usedIds.has(q.id));
   const pool = available.length > 0 ? available : QUESTIONS;

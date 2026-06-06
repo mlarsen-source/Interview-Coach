@@ -3,13 +3,19 @@
 import { useCallback, useRef, useState } from "react";
 import {
   INTRO_QUESTION,
+  MAX_INTERVIEW_QUESTIONS,
   pickRandomQuestion,
   type InterviewQuestion,
 } from "@/lib/prompts/questions";
 import { INTERVIEWERS, DEFAULT_INTERVIEWER, type Interviewer } from "@/lib/prompts/interviewers";
 import { ScorecardPanel } from "@/app/scorecard/ScorecardPanel";
+import { SessionScorecardPanel } from "@/app/scorecard/SessionScorecardPanel";
 import { buildReviewContext } from "@/lib/interview-coach/sessionAdapter";
-import type { ReviewContextPayload } from "@/lib/interview-coach/types";
+import type {
+  FeedbackMode,
+  ReviewContextPayload,
+  SessionReviewPayload,
+} from "@/lib/interview-coach/types";
 import styles from "./InterviewClient.module.css";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -18,7 +24,7 @@ const SILENCE_THRESHOLD = 0.015;
 const SILENCE_BEFORE_PROMPT_MS = 3_000;
 const SILENCE_AFTER_PROMPT_MS = 8_000;
 
-type Stage = "idle" | "playing" | "recording" | "processing" | "done";
+type Stage = "idle" | "playing" | "recording" | "processing" | "done" | "finished";
 
 interface Segment {
   start: number;
@@ -27,6 +33,14 @@ interface Segment {
   arousal: number;
   dominance: number;
   valence: number;
+}
+
+function upsertAnswer(
+  answers: ReviewContextPayload[],
+  next: ReviewContextPayload
+): ReviewContextPayload[] {
+  const rest = answers.filter((a) => a.question.id !== next.question.id);
+  return [...rest, next];
 }
 
 function buildIntro(interviewer: Interviewer): string {
@@ -59,15 +73,18 @@ async function speakWithGroq(text: string, voice: string, signal: AbortSignal): 
 
 export default function InterviewClient() {
   const [interviewer, setInterviewer] = useState<Interviewer>(DEFAULT_INTERVIEWER);
+  const [feedbackMode, setFeedbackMode] = useState<FeedbackMode>("perQuestion");
   const [question, setQuestion] = useState<InterviewQuestion | null>(null);
   const [questionNumber, setQuestionNumber] = useState(0);
   const [stage, setStage] = useState<Stage>("idle");
   const [showQuestion, setShowQuestion] = useState(false);
   const [showDonePrompt, setShowDonePrompt] = useState(false);
   const [segments, setSegments] = useState<Segment[]>([]);
+  const [savedAnswers, setSavedAnswers] = useState<ReviewContextPayload[]>([]);
   const [reviewContext, setReviewContext] = useState<ReviewContextPayload | null>(null);
+  const [sessionPayload, setSessionPayload] = useState<SessionReviewPayload | null>(null);
   const [statusText, setStatusText] = useState(
-    "Select your interviewer and press Start Interview."
+    "Select your interviewer, feedback timing, and press Start Interview."
   );
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -79,6 +96,12 @@ export default function InterviewClient() {
   const rafRef = useRef<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const usedIdsRef = useRef<Set<number>>(new Set());
+  const pendingEndRef = useRef(false);
+  const questionRef = useRef<InterviewQuestion | null>(null);
+  const savedAnswersRef = useRef<ReviewContextPayload[]>([]);
+
+  questionRef.current = question;
+  savedAnswersRef.current = savedAnswers;
 
   const newAbort = useCallback((): AbortSignal => {
     abortRef.current?.abort();
@@ -102,6 +125,47 @@ export default function InterviewClient() {
     }
   }, []);
 
+  const resetInterview = useCallback(() => {
+    abortRef.current?.abort();
+    clearTimers();
+    pendingEndRef.current = false;
+    usedIdsRef.current.clear();
+    setQuestion(null);
+    setQuestionNumber(0);
+    setSegments([]);
+    setSavedAnswers([]);
+    setReviewContext(null);
+    setSessionPayload(null);
+    setShowQuestion(false);
+    setShowDonePrompt(false);
+    setStage("idle");
+    setStatusText("Select your interviewer, feedback timing, and press Start Interview.");
+  }, [clearTimers]);
+
+  const finishInterview = useCallback(
+    (answers: ReviewContextPayload[]) => {
+      abortRef.current?.abort();
+      clearTimers();
+      pendingEndRef.current = false;
+
+      if (feedbackMode === "endOfInterview" && answers.length > 0) {
+        setSavedAnswers(answers);
+        setSessionPayload({ answers });
+        setReviewContext(null);
+        setShowQuestion(false);
+        setStage("finished");
+        setStatusText("Interview complete. Review your session feedback below.");
+        return;
+      }
+
+      resetInterview();
+      if (answers.length > 0) {
+        setStatusText("Interview ended.");
+      }
+    },
+    [clearTimers, feedbackMode, resetInterview]
+  );
+
   const stopRecording = useCallback(() => {
     clearTimers();
     setShowDonePrompt(false);
@@ -119,6 +183,7 @@ export default function InterviewClient() {
       const form = new FormData();
       form.append("file", blob, `answer${ext}`);
       const signal = newAbort();
+      const activeQuestion = questionRef.current;
       try {
         const res = await fetch(`${API_BASE}/speech/transcribe`, {
           method: "POST",
@@ -128,14 +193,25 @@ export default function InterviewClient() {
         if (!res.ok) throw new Error(`${res.status}`);
         const data: Segment[] = await res.json();
         setSegments(data);
+
+        if (pendingEndRef.current && activeQuestion) {
+          const answers = upsertAnswer(
+            savedAnswersRef.current,
+            buildReviewContext(activeQuestion, data)
+          );
+          finishInterview(answers);
+          return;
+        }
+
         setStage("done");
         setStatusText("Answer received. Review your response or move to the next question.");
       } catch (err) {
+        pendingEndRef.current = false;
         setStatusText(`Error: ${err}. Try again.`);
         setStage("idle");
       }
     },
-    [newAbort]
+    [finishInterview, newAbort]
   );
 
   const startRecording = useCallback(async () => {
@@ -205,12 +281,15 @@ export default function InterviewClient() {
 
   const startInterview = useCallback(async () => {
     usedIdsRef.current.clear();
+    pendingEndRef.current = false;
+    setSavedAnswers([]);
+    setReviewContext(null);
+    setSessionPayload(null);
     const signal = newAbort();
     const firstQuestion = INTRO_QUESTION;
     setQuestion(firstQuestion);
     setQuestionNumber(1);
     setSegments([]);
-    setReviewContext(null);
     setShowQuestion(false);
     setStage("playing");
     setStatusText(`${interviewer.name} is introducing themselves…`);
@@ -229,7 +308,14 @@ export default function InterviewClient() {
     startRecording();
   }, [interviewer, newAbort, startRecording]);
 
+  const commitCurrentAnswer = useCallback((): ReviewContextPayload[] => {
+    if (!question || segments.length === 0) return savedAnswers;
+    return upsertAnswer(savedAnswers, buildReviewContext(question, segments));
+  }, [question, segments, savedAnswers]);
+
   const nextQuestion = useCallback(async () => {
+    const answers = commitCurrentAnswer();
+    setSavedAnswers(answers);
     stopRecording();
     const signal = newAbort();
     const next = pickRandomQuestion(usedIdsRef.current);
@@ -252,19 +338,48 @@ export default function InterviewClient() {
 
     setShowQuestion(true);
     startRecording();
-  }, [interviewer, newAbort, stopRecording, startRecording]);
+  }, [commitCurrentAnswer, interviewer, newAbort, stopRecording, startRecording]);
 
-  const hearFeedback = useCallback(() => {
+  const endInterview = useCallback(() => {
+    if (stage === "recording") {
+      pendingEndRef.current = true;
+      stopRecording();
+      setStatusText("Finishing your answer…");
+      return;
+    }
+
+    if (stage === "processing") {
+      pendingEndRef.current = true;
+      setStatusText("Finishing your answer…");
+      return;
+    }
+
+    if (stage === "playing") {
+      abortRef.current?.abort();
+    }
+
+    finishInterview(commitCurrentAnswer());
+  }, [commitCurrentAnswer, finishInterview, stage, stopRecording]);
+
+  const viewFeedback = useCallback(() => {
     if (!question || segments.length === 0) return;
     setReviewContext(buildReviewContext(question, segments));
   }, [question, segments]);
+
+  const dismissFeedback = useCallback(() => {
+    setReviewContext(null);
+  }, []);
+
+  const interviewActive = stage !== "idle" && stage !== "finished";
+  const hasMoreQuestions = questionNumber < MAX_INTERVIEW_QUESTIONS;
+  const showPerQuestionFeedback = feedbackMode === "perQuestion" && stage === "done";
 
   const dotClass = [
     styles.dot,
     stage === "playing" ? styles.playing : "",
     stage === "recording" ? styles.recording : "",
     stage === "processing" ? styles.processing : "",
-    stage === "done" ? styles.done : "",
+    stage === "done" || stage === "finished" ? styles.done : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -274,10 +389,12 @@ export default function InterviewClient() {
       <div className={styles.card}>
         <div className={styles.meta}>
           <span>Interview Coach</span>
-          {questionNumber > 0 && (
+          {questionNumber > 0 && stage !== "finished" && (
             <>
               <span>·</span>
-              <span>Question {questionNumber}</span>
+              <span>
+                Question {questionNumber} of {MAX_INTERVIEW_QUESTIONS}
+              </span>
             </>
           )}
         </div>
@@ -309,6 +426,30 @@ export default function InterviewClient() {
             ))}
           </select>
         </div>
+
+        <fieldset className={styles.feedbackModeFieldset} disabled={stage !== "idle"}>
+          <legend className={styles.feedbackModeLegend}>Feedback timing</legend>
+          <label className={styles.feedbackModeOption}>
+            <input
+              type="radio"
+              name="feedback-mode"
+              value="perQuestion"
+              checked={feedbackMode === "perQuestion"}
+              onChange={() => setFeedbackMode("perQuestion")}
+            />
+            After each question
+          </label>
+          <label className={styles.feedbackModeOption}>
+            <input
+              type="radio"
+              name="feedback-mode"
+              value="endOfInterview"
+              checked={feedbackMode === "endOfInterview"}
+              onChange={() => setFeedbackMode("endOfInterview")}
+            />
+            At end of interview
+          </label>
+        </fieldset>
 
         <div className={styles.divider} />
 
@@ -353,21 +494,37 @@ export default function InterviewClient() {
 
           {stage === "done" && (
             <>
-              <button className={styles.btnPrimary} onClick={nextQuestion}>
-                Next Question
-              </button>
-              <button
-                className={styles.btnSecondary}
-                onClick={hearFeedback}
-                disabled={segments.length === 0 || reviewContext !== null}
-              >
-                Hear Feedback
-              </button>
+              {hasMoreQuestions && (
+                <button className={styles.btnPrimary} onClick={nextQuestion}>
+                  Next Question
+                </button>
+              )}
+              {showPerQuestionFeedback && (
+                <button
+                  className={styles.btnSecondary}
+                  onClick={reviewContext ? dismissFeedback : viewFeedback}
+                  disabled={segments.length === 0}
+                >
+                  {reviewContext ? "Hide Feedback" : "View Feedback"}
+                </button>
+              )}
             </>
+          )}
+
+          {interviewActive && (
+            <button className={styles.btnSecondary} onClick={endInterview}>
+              End Interview
+            </button>
+          )}
+
+          {stage === "finished" && (
+            <button className={styles.btnPrimary} onClick={resetInterview}>
+              Start New Interview
+            </button>
           )}
         </div>
 
-        {segments.length > 0 && (
+        {segments.length > 0 && stage !== "finished" && (
           <>
             <div className={styles.divider} />
             <div className={styles.segments}>
@@ -391,7 +548,14 @@ export default function InterviewClient() {
         {reviewContext && (
           <>
             <div className={styles.divider} />
-            <ScorecardPanel sessionInput={reviewContext} />
+            <ScorecardPanel sessionInput={reviewContext} showShellBadge={false} />
+          </>
+        )}
+
+        {sessionPayload && stage === "finished" && (
+          <>
+            <div className={styles.divider} />
+            <SessionScorecardPanel sessionInput={sessionPayload} />
           </>
         )}
       </div>

@@ -61,3 +61,26 @@ class SessionFeedbackResponse(BaseModel):
     transcriptScores: TranscriptScores
     feedback: QualitativeFeedback
     modelAnswer: ModelAnswer
+
+
+class SessionReviewPayload(BaseModel):
+    """Request body for POST /feedback/generate-session — multiple Q&A pairs."""
+
+    answers: list[ReviewContextPayload]
+
+
+class QuestionReview(BaseModel):
+    question: Question
+    transcriptScores: TranscriptScores
+    feedback: QualitativeFeedback
+    modelAnswer: ModelAnswer
+
+
+class FullSessionFeedbackResponse(BaseModel):
+    """Response body for POST /feedback/generate-session."""
+
+    overallSummary: str
+    overallStrengths: list[str]
+    overallImprovements: list[str]
+    overallDeliveryNotes: str
+    questionReviews: list[QuestionReview]
