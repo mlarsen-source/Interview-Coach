@@ -25,6 +25,8 @@ export type ScorecardPanelProps = {
   loadingTranscriptScores?: boolean;
   loadingFeedback?: boolean;
   showShellBadge?: boolean;
+  /** Called once when feedback has been fetched or resolved from `result`. */
+  onFeedbackReady?: (response: SessionFeedbackResponse) => void;
 };
 
 async function fetchFeedback(
@@ -52,6 +54,7 @@ export function ScorecardPanel({
   loadingTranscriptScores = false,
   loadingFeedback = false,
   showShellBadge = false,
+  onFeedbackReady,
 }: ScorecardPanelProps) {
   const [fetched, setFetched] = useState<SessionFeedbackResponse | null>(null);
   const [fetching, setFetching] = useState(false);
@@ -89,6 +92,12 @@ export function ScorecardPanel({
   const modelAnswer = result?.modelAnswer ?? fetched?.modelAnswer ?? null;
 
   const isLoadingFeedback = loadingFeedback || (shouldFetch && fetching);
+
+  useEffect(() => {
+    if (isLoadingFeedback || !feedback || !onFeedbackReady) return;
+    if (!transcriptScores || !modelAnswer) return;
+    onFeedbackReady({ transcriptScores, feedback, modelAnswer });
+  }, [feedback, isLoadingFeedback, modelAnswer, onFeedbackReady, transcriptScores]);
 
   return (
     <>

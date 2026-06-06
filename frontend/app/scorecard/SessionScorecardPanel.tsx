@@ -14,6 +14,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export type SessionScorecardPanelProps = {
   sessionInput: SessionReviewPayload;
+  /** Called once when session feedback has been fetched. */
+  onFeedbackReady?: (response: FullSessionFeedbackResponse) => void;
 };
 
 async function fetchSessionFeedback(
@@ -30,7 +32,10 @@ async function fetchSessionFeedback(
   return (await res.json()) as FullSessionFeedbackResponse;
 }
 
-export function SessionScorecardPanel({ sessionInput }: SessionScorecardPanelProps) {
+export function SessionScorecardPanel({
+  sessionInput,
+  onFeedbackReady,
+}: SessionScorecardPanelProps) {
   const [result, setResult] = useState<FullSessionFeedbackResponse | null>(null);
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +61,10 @@ export function SessionScorecardPanel({ sessionInput }: SessionScorecardPanelPro
     void run();
     return () => controller.abort();
   }, [sessionInput]);
+
+  useEffect(() => {
+    if (result && onFeedbackReady) onFeedbackReady(result);
+  }, [onFeedbackReady, result]);
 
   if (error) {
     return (
