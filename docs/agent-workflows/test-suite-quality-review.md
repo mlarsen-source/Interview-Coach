@@ -6,7 +6,7 @@ Reviews the **quality and simplicity of the existing test suite** — whether te
 
 **Does not:** check for test coverage gaps in newly written code (that is handled by `code-quality-review.md`). Does not run tests or generate new tests. Scope is existing test quality only, not coverage metrics.
 
-**Note:** Interview Coach may not have a frontend test runner configured yet. If no tests exist, state that plainly and limit the review to Storybook story quality per `AGENTS.md` when `.stories.tsx` files are in scope.
+**Note:** Interview Coach has no frontend test runner configured. `pnpm test` does not exist in `frontend/package.json`. When invoked, limit this review to **Storybook story quality** — `.stories.tsx` files are the primary coverage mechanism for this project. State "no test runner configured" at the top and proceed directly to story review.
 
 ---
 
@@ -80,16 +80,6 @@ Apply the same standard to every test category that exists in the project:
 - focused on important behavior
 - not overengineered
 
-## End-to-end test review requirements
-
-If end-to-end tests exist, check whether they:
-
-- focus on the most important real user flows
-- avoid trying to cover every variation and edge case
-- avoid becoming long, fragile, or over-scripted
-- avoid excessive setup, orchestration, or custom utilities unless absolutely necessary
-- feel like a practical validation of core workflows rather than a large QA automation system
-
 ## Specific things to flag
 
 - tests that are too complex for their value
@@ -113,14 +103,12 @@ State clearly:
 - whether the suite complies with the simplicity requirement
 - whether it feels like realistic student-level work or feels too advanced, overbuilt, or artificial
 
-### 2. Breakdown by test type
+### 2. Breakdown by coverage type
 
-Organize into sections only for the test categories that actually exist, such as:
+This project's primary coverage mechanism is Storybook stories. Organize into sections only for coverage types that actually exist:
 
-- Unit tests
-- Integration tests
-- Component or UI tests
-- End-to-end tests
+- Storybook stories (`.stories.tsx`) — required for all reusable components and components with meaningful visual states
+- Unit tests — only if any `.test.ts` or `.test.tsx` files exist (currently none configured)
 
 ### 3. File-by-file or area-by-area review
 

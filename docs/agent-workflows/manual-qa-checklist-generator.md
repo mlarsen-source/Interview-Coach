@@ -40,7 +40,14 @@ Include only the failure or edge cases that are realistic and relevant to the ch
 
 ### 4. Mode-dependent checks
 
-If the change depends on feature flags, environments, or auth modes, include separate checks for each meaningful mode.
+If the change depends on behavioral modes or environments, include separate checks for each meaningful mode.
+
+For Interview Coach, always include separate checks for both feedback modes when the recording or feedback pipeline is affected:
+
+- **perQuestion mode** — scorecard appears after each answer via `POST /feedback/generate`; interviewer reads feedback aloud via TTS; user can advance to next question
+- **endOfInterview mode** — answers are collected silently across all questions; session scorecard appears after "End Interview" via `POST /feedback/generate-session`; interviewer reads session summary aloud
+
+Also include checks for the full scorecard rendering path: DeliveryScores (arousal/dominance/valence), TranscriptFeedbackScores (clarity/structure/relevance/conciseness), QualitativeFeedback (summary/strengths/improvements/deliveryNotes), and ModelAnswer.
 
 ## Constraints
 

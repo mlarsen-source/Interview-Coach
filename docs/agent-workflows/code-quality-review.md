@@ -50,12 +50,11 @@ Check for:
 - invalid assumptions
 - incorrect prop or state flow
 - race conditions
-- unhandled promise rejections
 - missing error paths
 - `process.env.*` values referenced inside a type-guarded branch without first being extracted to a const — TypeScript does not narrow `process.env` re-reads reliably; the guard may pass but the spread or argument receives `undefined`
 - stub or placeholder methods whose parameter types are inconsistent with the method's documented purpose — a method with no callers yet can still have a wrong signature; verify parameters match what the implementation will actually need
-- `await` expressions in API route handlers that sit outside any try/catch block — if the awaited call throws, the route bypasses the standard `{ success: false }` JSON error shape and returns a raw Next.js 500; every async operation after the auth check must be covered by a catch block
-- stub or placeholder implementations in production code paths that throw unconditionally — a stub reachable by live production requests must return a safe fallback (e.g. 403, 501, or null) rather than throw; throwing is only acceptable in dead code or methods with no real callers on any active request path
+- Unhandled promise rejections in client-side `fetch` calls to the FastAPI backend — every call should be wrapped in try/catch; unhandled rejections cause silent failures in the recording, transcription, or feedback pipeline
+- stub or placeholder implementations in production code paths that throw unconditionally — a FastAPI router stub reachable by live requests must return a safe fallback (e.g. 501) rather than raise; raising is only acceptable in dead code or stubs with no active request path
 - resource allocations that require explicit cleanup — for any resource allocated with an explicit close, cancel, release, or destroy method (e.g. `ImageBitmap.close()`, `ReadableStreamDefaultReader.cancel()`, `AbortController` timers, canvas contexts, sockets, file handles), enumerate every exit path from the enclosing block (success return, throw, early return, implicit fall-through) and verify cleanup fires on each; a cleanup call that exists on the happy path only is a resource leak
 
 Decision rule:
@@ -102,7 +101,7 @@ Check for:
 - unnecessary complexity
 - duplication that creates real maintenance risk
 - parallel literal lists in the same module (for example a string-union type maintained alongside a discriminated union with the same variants, or two arrays of the same enum values that must stay in sync)
-- duplicate TypeScript types that mirror Zod schemas (or API DTOs) in separate files without `z.infer` or a single source of truth — when both exist, derived types should come from the schema so drift is impossible at compile time
+- duplicate TypeScript types that mirror backend Pydantic response shapes in separate files — types should be defined once in `lib/interview-coach/types.ts` and imported where needed, not redefined per-component
 - inconsistent approaches to the same pattern
 - JS-managed UI state that native HTML or CSS already handles cleanly
 
@@ -122,7 +121,6 @@ Check changed code against project conventions in `AGENTS.md`, specifically:
 - Deep relative imports where the `@/` alias works
 - Missing `'use client'` on components that use MediaRecorder, browser APIs, or client-side `fetch` to the backend
 - Raw `<img>` or `<a>` for internal navigation instead of `next/image` / `next/link`
-- Zod (or equivalent) validation missing from new Next.js Route Handlers that accept body/query input
 - Exported async functions missing an explicit return type on public API/client surfaces
 
 Decision rule:
@@ -182,38 +180,11 @@ Run this section when the diff touches `backend/` Python services/routers **or**
 2. **No duplicated ML.** Frontend does not call OpenAI/Anthropic directly for pipeline steps owned by the backend.
 3. **Upload flow.** Recording/upload uses `FormData` (or equivalent) matching backend expectations; loading and error states are handled in UI.
 4. **Typed responses.** Scorecard and pipeline types align with backend response shapes (arousal/dominance/valence, transcript fields, feedback sections).
-5. **Presentational/container split.** Data-fetching pages do not embed large presentational JSX without a story-friendly presentational child.
+5. **Component decomposition.** Client components with meaningful visual states expose props suitable for Storybook stories; do not embed non-trivial UI logic in a single monolithic client component when splitting would enable isolated state testing via stories.
 
 Decision rule:
 
 - Flag failures that would break the record → analyze → scorecard flow or leak secrets.
-
-### 10. New API route security
-
-Run this section whenever the diff contains a new file under `app/api/` or `pages/api/`.
-
-For each new API route file, perform these checks:
-
-1. **Authentication gate (if applicable).** Interview Coach may not have auth yet. If the route is documented or intended to be public (health proxies, dev-only), say so. If the route should be protected, confirm an auth check is the first async operation before data access or side effects.
-
-2. **SSRF prevention (outbound routes only).** If the route makes any outbound HTTP request (via `fetch`, `http.request`, `https.request`, or any HTTP client), confirm:
-   - A blocklist or allowlist is applied before the request is made and after any DNS resolution
-   - For IP blocklists: cross-reference against the complete IANA IPv4 Special-Purpose Address Registry. The minimum complete set is: `0.0.0.0/8` ("this" network), `10.0.0.0/8` (RFC1918), `100.64.0.0/10` (CGNAT), `127.0.0.0/8` (loopback), `169.254.0.0/16` (link-local), `172.16.0.0/12` (RFC1918), `192.0.0.0/24` (IANA special), `192.0.2.0/24` (TEST-NET-1), `192.88.99.0/24` (6to4 relay), `192.168.0.0/16` (RFC1918), `198.18.0.0/15` (benchmarking), `198.51.100.0/24` (TEST-NET-2), `203.0.113.0/24` (TEST-NET-3), `224.0.0.0/4` (multicast), `240.0.0.0/4` (reserved). A blocklist covering only RFC1918 + loopback is incomplete.
-   - DNS resolution happens before the request is made so attacker-controlled DNS cannot redirect to a private address after the blocklist check passes
-
-3. **Cache-Control semantics.** If the route sets a `Cache-Control` response header, verify the directive matches the route's sensitivity (user-specific coaching data must use `private` or `no-store`, not `public`).
-
-4. **Input validation.** Confirm all query params, path params, and request body fields are validated (Zod or equivalent) before use. Unvalidated string params passed to database queries, file paths, or outbound URLs are injection vectors.
-
-5. **Response size and content-type limits.** If the route proxies or streams external content:
-   - A maximum byte limit must be enforced during streaming (not just on `Content-Length`, which can be omitted or spoofed)
-   - The upstream `Content-Type` must be validated against an allowlist before being forwarded to the client
-
-6. **Error shape consistency.** Confirm all error paths return the project-standard `{ success: false, error: "..." }` JSON shape. Any `await` outside a try/catch bypasses this shape and returns a raw Next.js 500 — covered by Priority 1, but re-verify here for new routes since the full surface is being established for the first time.
-
-Decision rule:
-
-- Each check above is a security or correctness requirement. Flag every failure.
 
 ## Constraints
 
@@ -226,7 +197,7 @@ Decision rule:
 
 Changed files are those returned by `git diff --name-only origin/main...HEAD` (or the confirmed target). Run from `frontend/` when the diff includes frontend files; from `backend/` for Python-only changes. Report results for each command that exists:
 
-- `pnpm test` / `pnpm test -- --findRelatedTests <files>` — only if a `test` script exists in `frontend/package.json`; otherwise state "not configured"
+- `pnpm test` / `pnpm test -- --findRelatedTests <files>` — not configured in this project; state "not configured — skipped" and proceed
 - `pnpm typecheck` (frontend)
 - `pnpm lint` (frontend)
 - `pnpm build` (frontend)

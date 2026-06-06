@@ -339,15 +339,14 @@ Each phase's sub-workflow doc may add more, but at minimum every phase runs thes
 
 **Phase 4 — Test suite quality:**
 
-- Run tests when configured: `pnpm test -- <changed test files>` from `frontend/` if `package.json` defines a `test` script; otherwise record "tests not configured — skipped". Failure → finding per failing test.
-- Run the full test suite if any source file (not test file) changed in a way that could affect untouched tests. Failure → finding.
-- Coverage check on new components/services if the project has a coverage threshold: report new code with no test → finding.
-- Pattern check: new `.skip`, `.only`, `xit`, `xdescribe` in changed test files → finding.
+- `pnpm test` is not configured in this project — record "tests not configured — skipped" in the Coverage report.
+- Storybook story coverage check: for every new component or component with new visual states in the changed file list, confirm a `ComponentName.stories.tsx` file exists with a named story for each state (idle, recording, processing, error, etc.) — missing story → finding.
+- Pattern check: new `.skip`, `.only`, `xit`, `xdescribe` in changed test or story files → finding.
 
 **Phase 5 — Feature flag gating:**
 
-- Pattern check: every new code path gated by a flag must have the flag-off behavior verifiable in code (grep for the flag identifier, confirm an else branch or early return exists) → finding if not.
-- Pattern check: new flag identifiers must appear in the flag registry/config → finding if missing.
+- Pattern check: every new `NEXT_PUBLIC_*` env var used for behavioral gating (not just API base URL configuration) must have a defined fallback or off-path verifiable in code → finding if not.
+- Pattern check: new behavioral mode branches (e.g. `feedbackMode` variants) must have both the on-path and off-path verifiable in code with no partial execution → finding if not.
 - Specific patterns the sub-workflow doc lists.
 
 **Phase 6 — PR description:**
@@ -408,8 +407,8 @@ Whenever the user has approved a fix and you are about to edit a file:
 5. Make only the approved edit. Do not bundle in adjacent improvements.
 6. **Review the new code before reporting it done.** After making the edit, re-read every line you just wrote as if you were reviewing a colleague's code — not code you wrote:
    - Would you flag any of these lines in a Phase 2 review? If yes, surface it as a new finding.
-   - Does the fix enforce its intended invariant at every layer the call path touches — not just the layer you edited? (If you changed a DB query, do all callers handle the new return value correctly? If you added a guard, do all branches after the guard also behave correctly?)
-   - If `pnpm test` exists, run `pnpm test -- --findRelatedTests <edited file path>` for frontend edits. If any test fails, treat it as a new finding and fix it now. If no test script exists, run `pnpm typecheck` and `pnpm lint` on touched frontend files instead.
+   - Does the fix enforce its intended invariant at every layer the call path touches — not just the layer you edited? (If you changed a FastAPI response shape, do all frontend callers that parse that response handle the new shape correctly? If you added a guard, do all branches after the guard also behave correctly?)
+   - `pnpm test` is not configured in this project — run `pnpm typecheck` and `pnpm lint` on touched frontend files after any edit.
    - If you discover a problem while reviewing your own fix, add it to the Open findings list. Do not silently edit it under the existing approval.
 7. After the edit, report what you changed using the post-edit report shape below.
 8. Re-read the file before any further edit to it.
@@ -590,23 +589,23 @@ Otherwise:
 
 Run if any of the following are true:
 
-- Any `.test.ts` or `.test.tsx` files are in the changed file list
-- New components or services were introduced (check whether tests were added or are missing)
+- Any `.stories.tsx` files are in the changed file list
+- New components or services were introduced (check whether stories were added or are missing)
 
-If not applicable, print the Session State Block, tell the user "Phase 4 skipped — no test changes and no new components or services detected," and ask if they are ready to move to Phase 5. Stop.
+If not applicable, print the Session State Block, tell the user "Phase 4 skipped — no story changes and no new components detected," and ask if they are ready to move to Phase 5. Stop.
 
 Otherwise:
 
-1. Run the Phase 4 deterministic floor: test suite scoped to changed test files, full suite if source files changed, coverage check on new components/services, pattern check for `.skip` / `.only` / `xit` / `xdescribe`.
+1. Run the Phase 4 deterministic floor: `pnpm test` is not configured — record "not configured — skipped"; run Storybook story coverage check on new/modified components; pattern check for `.skip` / `.only` / `xit` / `xdescribe` in story files.
 2. Read `docs/agent-workflows/test-suite-quality-review.md` in full and run any additional checks it defines.
-3. Add subjective observations after deterministic checks (test naming, assertion quality, missing edge cases), each labeled `Subjective`.
+3. Add subjective observations after deterministic checks (story naming, state coverage, missing edge-case stories), each labeled `Subjective`.
 4. Print phase narrative + Session State Block + Gate Block (with Coverage report). Stop.
 
 ## Phase 5 — Feature flag gating review (`feature-flag-gating-review.md`)
 
 If the feature flag review was already completed during Phase 1, print the Session State Block, tell the user "Phase 5 already completed during Phase 1 — see flag review output above," and ask if they are ready to move to Phase 6. Stop.
 
-Otherwise, run if any file references feature flags or env-gated behavior (`featureFlag`, `featureGate`, `NEXT_PUBLIC_*` toggles, or similar).
+Otherwise, run if any file introduces new `NEXT_PUBLIC_*` env vars used for behavioral gating (not just API base URL configuration), or adds new behavioral mode branches that require on/off path verification.
 
 If not applicable, print the Session State Block, tell the user "Phase 5 skipped — no feature flag changes detected," and ask if they are ready to move to Phase 6. Stop.
 
@@ -681,7 +680,7 @@ Before sending any response in this workflow, verify:
 - [ ] Am I about to make any edit not on the Approved Changes Ledger? If so, stop and ask.
 - [ ] Did I check for intentional-behavior comments before any edit I'm about to make?
 - [ ] If the finding I'm about to fix changes I/O, network, security, auth, or error-handling behavior: did I enumerate what user-facing features and external services currently route through this code path, and confirm the fix preserves their existing behavior? If not, do that before editing.
-- [ ] After each edit: did I re-read the lines I just wrote as if reviewing a colleague's code (not my own), check that the fix enforces its invariant at every layer the call path touches, and run `pnpm test -- --findRelatedTests <path>` when a test script exists (otherwise typecheck/lint)? Test failures are findings — not items to defer.
+- [ ] After each edit: did I re-read the lines I just wrote as if reviewing a colleague's code (not my own), check that the fix enforces its invariant at every layer the call path touches, and run `pnpm typecheck` and `pnpm lint` on touched frontend files? Failures are findings — not items to defer.
 - [ ] Am I using any forbidden phrases ("follow-up PR," "ship as-is," "defer," "optional fix," etc.)?
 - [ ] Am I framing findings as "would you like to fix" instead of "I will fix unless you waive"?
 - [ ] If this is a phase with a deterministic floor (Phases 1–5), did I actually execute every required command from the Phase deterministic check list, and did I include the Coverage report in the Gate Block with verbatim command results?

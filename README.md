@@ -1,24 +1,25 @@
 # Interview Coach
 
-AI-powered interview coaching platform. Users select an interviewer, listen to a spoken question, record their answer, and receive structured feedback on delivery, tone, and answer quality.
+AI-powered interview coaching platform. Users select an interviewer, choose feedback timing, listen to a spoken question, record their answer, and receive structured feedback on delivery, tone, and answer quality.
 
 ## How it works
 
-1. User selects an interviewer voice and presses **Start Interview**
+1. User selects an interviewer voice and feedback timing, then presses **Start Interview**
 2. Interviewer introduces themselves via TTS (`POST /speech/tts`)
 3. Interviewer reads the question aloud; recording starts automatically
 4. User answers and presses **I'm Done Answering**
 5. Audio → Groq Whisper → timestamped transcript segments (`POST /speech/transcribe`)
 6. Each segment → local wav2vec2 model → arousal / dominance / valence scores
 7. Scores + transcript displayed per segment on the interview screen
-8. *(Coming)* Transcript + scores + question → LLM → structured feedback (`POST /feedback/generate`)
-9. *(Coming)* Frontend renders full scorecard
+8. Transcript + scores + question → Groq LLM → structured feedback (`POST /feedback/generate`)
+9. Scorecard renders per-question feedback (strengths, improvements, delivery notes, model answer, transcript scores) or full-session summary at end of interview (`POST /feedback/generate-session`)
 
 ## Prerequisites
 
 Install these once at the OS level before running setup:
 
 - **Python 3.9+**
+- **Node.js 18+** — download from https://nodejs.org (LTS release)
 - **pnpm** — `npm install -g pnpm`
 - **ffmpeg** — required to decode audio files:
 
@@ -54,8 +55,8 @@ cp backend/.env.example backend/.env
 Open `backend/.env` and fill in your keys:
 
 ```
-GROQ_API_KEY=your_key_here       # https://console.groq.com  (speech-to-text + TTS)
-ANTHROPIC_API_KEY=your_key_here  # https://console.anthropic.com  (LLM feedback, coming)
+GROQ_API_KEY=your_key_here       # https://console.groq.com  (TTS + speech-to-text + LLM feedback)
+ANTHROPIC_API_KEY=your_key_here  # https://console.anthropic.com  (reserved)
 OPENAI_API_KEY=your_key_here     # Reserved
 ```
 
@@ -116,16 +117,26 @@ backend/
   requirements.txt              — Python dependencies
   services/
     tone_delivery_analyzer/     — local wav2vec2 emotion model (arousal/dominance/valence)
-    speech_to_text/             — Groq Whisper transcription + TTS
-    llm/                        — LLM feedback generation (coming)
-    text_analysis/              — transcript scoring (coming)
+    speech_to_text/             — Groq Whisper transcription + Orpheus TTS
+    llm/                        — Groq LLM feedback generation (/feedback/generate, /feedback/generate-session)
+    text_analysis/              — transcript scoring (reserved)
 
 frontend/
   app/
     page.tsx                    — interview UI (home page)
-    InterviewClient.tsx         — full interview state machine
+    InterviewClient.tsx         — full interview state machine (recording, VAD, TTS, feedback)
     layout.tsx / globals.css    — root layout and styles
-    scorecard/                  — scorecard display components
+    components/
+      MicWaveform/              — live mic waveform visualizer
+    scorecard/
+      ScorecardPanel.tsx        — per-question scorecard (calls /feedback/generate, renders result)
+      SessionScorecardPanel.tsx — full-session scorecard (calls /feedback/generate-session)
+      components/
+        Scorecard/              — top-level scorecard layout
+        DeliveryScores/         — arousal/dominance/valence score display
+        TranscriptFeedbackScores/ — clarity/structure/relevance/conciseness display
+        QualitativeFeedback/    — strengths, improvements, delivery notes
+        ModelAnswer/            — example answer display
     dev/
       flow/                     — pipeline visualization dev page
       transcribe/               — transcription dev/debug page
@@ -137,6 +148,11 @@ frontend/
       types.ts                  — shared TypeScript types
       mocks.ts                  — mock data for UI development
       pipelineStages.ts         — pipeline stage definitions
+      sessionAdapter.ts         — builds ReviewContextPayload from question + segments
+      feedbackSpeech.ts         — converts feedback responses to TTS scripts
+      aggregateReviewPayload.ts — aggregates per-question answers into session payload
+    speech/
+      tts.ts                    — frontend helper for POST /speech/tts
 
 docs/
   architecture.md               — system architecture and data flow
@@ -155,11 +171,25 @@ docs/
 | Layer            | Technology                                                     |
 | ---------------- | -------------------------------------------------------------- |
 | Frontend         | Next.js 16, React 19, TypeScript, Tailwind CSS 4               |
+| Component docs   | Storybook 10                                                   |
 | Backend          | FastAPI (Python)                                               |
 | Text-to-speech   | Groq Orpheus (`canopylabs/orpheus-v1-english`)                 |
 | Speech-to-text   | Groq Whisper (`whisper-large-v3-turbo`)                        |
 | Tone/delivery    | `audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim` (local)|
-| LLM feedback     | Anthropic Claude (coming)                                      |
+| LLM feedback     | Groq (`openai/gpt-oss-20b`)                                    |
 | Package manager  | pnpm                                                           |
-| Frontend deploy  | Vercel (planned)                                               |
-| Backend deploy   | Render or Fly.io (planned)                                     |
+| Frontend deploy  | TBD                                                            |
+| Backend deploy   | TBD                                                            |
+
+## Backend endpoints
+
+| Method | Path                        | Status   | Purpose                                                        |
+| ------ | --------------------------- | -------- | -------------------------------------------------------------- |
+| GET    | `/health`                   | done     | Liveness check                                                 |
+| GET    | `/emotion/health`           | done     | Confirms emotion model is loaded                               |
+| POST   | `/speech/tts`               | done     | Text → WAV audio (Groq Orpheus TTS)                            |
+| POST   | `/speech/transcribe`        | done     | Audio → per-segment transcript + emotion scores                |
+| POST   | `/emotion/analyze`          | done     | Audio → single arousal / dominance / valence score             |
+| POST   | `/feedback/generate`        | done     | Transcript + scores + question → per-answer LLM feedback       |
+| POST   | `/feedback/generate-session`| done     | Multiple Q&A pairs → holistic session feedback + per-question reviews |
+| POST   | `/analysis/*`               | reserved | Transcript text analysis (reserved)                            |
