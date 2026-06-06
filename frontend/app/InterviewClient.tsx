@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   INTRO_QUESTION,
   MAX_INTERVIEW_QUESTIONS,
@@ -100,8 +100,13 @@ export default function InterviewClient() {
   const questionRef = useRef<InterviewQuestion | null>(null);
   const savedAnswersRef = useRef<ReviewContextPayload[]>([]);
 
-  questionRef.current = question;
-  savedAnswersRef.current = savedAnswers;
+  useEffect(() => {
+    questionRef.current = question;
+  }, [question]);
+
+  useEffect(() => {
+    savedAnswersRef.current = savedAnswers;
+  }, [savedAnswers]);
 
   const newAbort = useCallback((): AbortSignal => {
     abortRef.current?.abort();
