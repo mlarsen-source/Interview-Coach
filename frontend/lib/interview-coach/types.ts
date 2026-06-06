@@ -77,6 +77,30 @@ export type SessionFeedbackResponse = {
   modelAnswer: ModelAnswer;
 };
 
+/** One answered question in a multi-question session review. */
+export type QuestionReview = {
+  question: InterviewQuestion;
+  transcriptScores: TranscriptFeedbackScores;
+  feedback: QualitativeFeedback;
+  modelAnswer: ModelAnswer;
+};
+
+/** Request body for POST /feedback/generate-session. */
+export type SessionReviewPayload = {
+  answers: ReviewContextPayload[];
+};
+
+/** Response body from POST /feedback/generate-session. */
+export type FullSessionFeedbackResponse = {
+  overallSummary: string;
+  overallStrengths: string[];
+  overallImprovements: string[];
+  overallDeliveryNotes: string;
+  questionReviews: QuestionReview[];
+};
+
+export type FeedbackMode = "perQuestion" | "endOfInterview";
+
 export type PipelineStageStatus = "idle" | "pending" | "done" | "error";
 
 export type PipelineStageId =
