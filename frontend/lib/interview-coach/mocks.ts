@@ -11,7 +11,7 @@ import type {
 
 export const mockQuestion: InterviewQuestion = {
   id: "q-behavioral-01",
-  prompt: "Tell me about a time you had to influence a team without direct authority.",
+  text: "Tell me about a time you had to influence a team without direct authority.",
 };
 
 export const mockTranscript: Transcript = {
@@ -21,16 +21,25 @@ export const mockTranscript: Transcript = {
       start: 0,
       end: 4.2,
       text: "Last year our design and engineering leads disagreed on scope for a launch.",
+      arousal: 0.58,
+      dominance: 0.51,
+      valence: 0.29,
     },
     {
       start: 4.2,
       end: 9.8,
       text: "I set up a short working session, mapped tradeoffs on a whiteboard,",
+      arousal: 0.63,
+      dominance: 0.57,
+      valence: 0.34,
     },
     {
       start: 9.8,
       end: 15.1,
       text: "and proposed a phased rollout. We shipped on time and both teams felt heard.",
+      arousal: 0.62,
+      dominance: 0.57,
+      valence: 0.33,
     },
   ],
 };
@@ -67,12 +76,11 @@ export const mockModelAnswer: ModelAnswer = {
 export const mockReviewContext: ReviewContextPayload = {
   question: mockQuestion,
   transcript: mockTranscript,
-  deliveryScores: mockDeliveryScores,
-  transcriptScores: mockTranscriptScores,
 };
 
 export const mockSessionReview: SessionReviewResult = {
   context: mockReviewContext,
+  transcriptScores: mockTranscriptScores,
   feedback: mockQualitativeFeedback,
   modelAnswer: mockModelAnswer,
 };

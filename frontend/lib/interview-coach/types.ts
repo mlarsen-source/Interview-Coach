@@ -5,21 +5,28 @@ export type DeliveryScores = {
   valence: number;
 };
 
+/**
+ * One timestamped transcript segment with its per-segment delivery (A/D/V)
+ * scores, as returned by POST /speech/transcribe.
+ */
 export type TranscriptSegment = {
   start: number;
   end: number;
   text: string;
+  arousal: number;
+  dominance: number;
+  valence: number;
 };
 
-/** Timestamped transcript from POST /speech/transcribe (contract TBD) */
+/** Timestamped transcript from POST /speech/transcribe. */
 export type Transcript = {
   text: string;
   segments: TranscriptSegment[];
 };
 
 /**
- * Delivery / content signals from transcript classifier (contract TBD).
- * Shell dimensions until backend defines the schema.
+ * Answer-quality scores produced by POST /feedback/generate (same Groq call
+ * as the qualitative feedback). All values are 0..1.
  */
 export type TranscriptFeedbackScores = {
   clarity: number;
@@ -30,15 +37,17 @@ export type TranscriptFeedbackScores = {
 
 export type InterviewQuestion = {
   id: string;
-  prompt: string;
+  text: string;
 };
 
-/** Combined context sent to POST /feedback/generate */
+/**
+ * Combined context sent to POST /feedback/generate. The per-segment delivery
+ * (A/D/V) scores live on transcript.segments, giving the LLM moment-by-moment
+ * context. transcriptScores are produced by the same call, not sent in.
+ */
 export type ReviewContextPayload = {
   question: InterviewQuestion;
   transcript: Transcript;
-  deliveryScores: DeliveryScores;
-  transcriptScores: TranscriptFeedbackScores;
 };
 
 /** Structured LLM feedback (contract TBD) */
@@ -56,6 +65,14 @@ export type ModelAnswer = {
 /** Full result rendered on the scorecard */
 export type SessionReviewResult = {
   context: ReviewContextPayload;
+  transcriptScores: TranscriptFeedbackScores;
+  feedback: QualitativeFeedback;
+  modelAnswer: ModelAnswer;
+};
+
+/** Response body from POST /feedback/generate. */
+export type SessionFeedbackResponse = {
+  transcriptScores: TranscriptFeedbackScores;
   feedback: QualitativeFeedback;
   modelAnswer: ModelAnswer;
 };

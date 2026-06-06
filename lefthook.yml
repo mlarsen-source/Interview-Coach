@@ -11,7 +11,7 @@ pre-commit:
     backend-format:
       root: backend/
       glob: "**/*.py"
-      run: ruff format {staged_files}
+      run: bash -c 'if [ -x "../venv/bin/python" ]; then PY="../venv/bin/python"; else PY="../venv/Scripts/python"; fi; "$PY" -m ruff format {staged_files}'
       stage_fixed: true
 
 pre-push:
@@ -27,7 +27,7 @@ pre-push:
       run: pnpm typecheck
     backend-lint:
       root: backend/
-      run: ruff check .
+      run: bash -c 'if [ -x "../venv/bin/python" ]; then PY="../venv/bin/python"; else PY="../venv/Scripts/python"; fi; "$PY" -m ruff check .'
     backend-format:
       root: backend/
-      run: ruff format --check .
+      run: bash -c 'if [ -x "../venv/bin/python" ]; then PY="../venv/bin/python"; else PY="../venv/Scripts/python"; fi; "$PY" -m ruff format --check .'

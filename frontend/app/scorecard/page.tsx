@@ -19,7 +19,7 @@ export default function ScorecardPage() {
           to step through the pipeline and watch payloads update.
         </p>
       </header>
-      <ScorecardPanel result={mockSessionReview} />
+      <ScorecardPanel result={mockSessionReview} showShellBadge />
     </div>
   );
 }
