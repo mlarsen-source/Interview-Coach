@@ -115,8 +115,9 @@ export default function InterviewClient() {
     async (blob: Blob) => {
       setStage("processing");
       setStatusText("Transcribing and scoring your answer…");
+      const ext = blob.type.includes("mp4") ? ".mp4" : blob.type.includes("ogg") ? ".ogg" : ".webm";
       const form = new FormData();
-      form.append("file", blob, "answer.webm");
+      form.append("file", blob, `answer${ext}`);
       const signal = newAbort();
       try {
         const res = await fetch(`${API_BASE}/speech/transcribe`, {
@@ -149,7 +150,14 @@ export default function InterviewClient() {
 
     accumulatedRef.current = [];
     hasSpokeRef.current = false;
-    const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
+    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? "audio/webm;codecs=opus"
+      : MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : MediaRecorder.isTypeSupported("audio/mp4")
+          ? "audio/mp4"
+          : "";
+    const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
     mediaRecorderRef.current = mr;
 
     const ctx = new AudioContext();
@@ -186,7 +194,7 @@ export default function InterviewClient() {
       if (e.data.size > 0) accumulatedRef.current.push(e.data);
     };
     mr.onstop = () => {
-      const blob = new Blob(accumulatedRef.current, { type: "audio/webm" });
+      const blob = new Blob(accumulatedRef.current, { type: mimeType || "audio/webm" });
       if (blob.size > 0) sendAudio(blob);
     };
 
