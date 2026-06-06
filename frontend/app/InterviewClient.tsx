@@ -12,11 +12,18 @@ import { MicWaveform, type MicWaveformHandle } from "@/app/components/MicWavefor
 import { ScorecardPanel } from "@/app/scorecard/ScorecardPanel";
 import { SessionScorecardPanel } from "@/app/scorecard/SessionScorecardPanel";
 import { buildReviewContext } from "@/lib/interview-coach/sessionAdapter";
+import {
+  buildQualitativeFeedbackScript,
+  buildSessionFeedbackScript,
+} from "@/lib/interview-coach/feedbackSpeech";
 import type {
   FeedbackMode,
+  FullSessionFeedbackResponse,
   ReviewContextPayload,
+  SessionFeedbackResponse,
   SessionReviewPayload,
 } from "@/lib/interview-coach/types";
+import { speakWithGroq } from "@/lib/speech/tts";
 import styles from "./InterviewClient.module.css";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -48,30 +55,6 @@ function buildIntro(interviewer: Interviewer): string {
   return `Hi there, welcome. I'm ${interviewer.name}, ${interviewer.title}. Thank you so much for coming in today — we're really glad to have you. Let's go ahead and get started.`;
 }
 
-async function speakWithGroq(text: string, voice: string, signal: AbortSignal): Promise<void> {
-  const res = await fetch(`${API_BASE}/speech/tts`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, voice }),
-    signal,
-  });
-  if (!res.ok) throw new Error(`TTS ${res.status}`);
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  return new Promise((resolve, reject) => {
-    const audio = new Audio(url);
-    audio.onended = () => {
-      URL.revokeObjectURL(url);
-      resolve();
-    };
-    audio.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Audio playback failed"));
-    };
-    audio.play();
-  });
-}
-
 export default function InterviewClient() {
   const [interviewer, setInterviewer] = useState<Interviewer>(DEFAULT_INTERVIEWER);
   const [feedbackMode, setFeedbackMode] = useState<FeedbackMode>("perQuestion");
@@ -87,6 +70,7 @@ export default function InterviewClient() {
   const [statusText, setStatusText] = useState(
     "Select your interviewer, feedback timing, and press Start Interview."
   );
+  const [feedbackSpeaking, setFeedbackSpeaking] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const accumulatedRef = useRef<Blob[]>([]);
@@ -101,6 +85,9 @@ export default function InterviewClient() {
   const questionRef = useRef<InterviewQuestion | null>(null);
   const savedAnswersRef = useRef<ReviewContextPayload[]>([]);
   const waveformRef = useRef<MicWaveformHandle>(null);
+  const autoFeedbackShownRef = useRef<string | null>(null);
+  const spokenFeedbackKeyRef = useRef<string | null>(null);
+  const sessionFeedbackSpokenRef = useRef(false);
 
   useEffect(() => {
     questionRef.current = question;
@@ -110,12 +97,65 @@ export default function InterviewClient() {
     savedAnswersRef.current = savedAnswers;
   }, [savedAnswers]);
 
+  useEffect(() => {
+    if (stage !== "done" || feedbackMode !== "perQuestion") return;
+    if (!question || segments.length === 0) return;
+    if (autoFeedbackShownRef.current === String(question.id)) return;
+    autoFeedbackShownRef.current = String(question.id);
+    setReviewContext(buildReviewContext(question, segments));
+  }, [stage, feedbackMode, question, segments]);
+
   const newAbort = useCallback((): AbortSignal => {
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     return ctrl.signal;
   }, []);
+
+  const speakFeedbackScript = useCallback(
+    async (script: string, session = false) => {
+      const signal = newAbort();
+      setFeedbackSpeaking(true);
+      setStatusText(
+        session
+          ? `${interviewer.name} is sharing your session feedback…`
+          : `${interviewer.name} is sharing feedback on your answer…`
+      );
+      try {
+        await speakWithGroq(script, interviewer.voice, signal);
+        setStatusText(
+          session
+            ? "Interview complete. Review your session feedback below."
+            : "Answer received. Review your response or move to the next question."
+        );
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setStatusText("Could not play feedback audio. You can still read it below.");
+      } finally {
+        setFeedbackSpeaking(false);
+      }
+    },
+    [interviewer, newAbort]
+  );
+
+  const handlePerQuestionFeedbackReady = useCallback(
+    (response: SessionFeedbackResponse) => {
+      if (!question) return;
+      if (spokenFeedbackKeyRef.current === String(question.id)) return;
+      spokenFeedbackKeyRef.current = String(question.id);
+      void speakFeedbackScript(buildQualitativeFeedbackScript(response.feedback));
+    },
+    [question, speakFeedbackScript]
+  );
+
+  const handleSessionFeedbackReady = useCallback(
+    (response: FullSessionFeedbackResponse) => {
+      if (sessionFeedbackSpokenRef.current) return;
+      sessionFeedbackSpokenRef.current = true;
+      void speakFeedbackScript(buildSessionFeedbackScript(response), true);
+    },
+    [speakFeedbackScript]
+  );
 
   const clearTimers = useCallback(() => {
     if (silenceTimerRef.current) {
@@ -137,6 +177,9 @@ export default function InterviewClient() {
     clearTimers();
     pendingEndRef.current = false;
     usedIdsRef.current.clear();
+    autoFeedbackShownRef.current = null;
+    spokenFeedbackKeyRef.current = null;
+    sessionFeedbackSpokenRef.current = false;
     setQuestion(null);
     setQuestionNumber(0);
     setSegments([]);
@@ -375,6 +418,7 @@ export default function InterviewClient() {
   }, [question, segments]);
 
   const dismissFeedback = useCallback(() => {
+    abortRef.current?.abort();
     setReviewContext(null);
   }, []);
 
@@ -384,7 +428,7 @@ export default function InterviewClient() {
 
   const dotClass = [
     styles.dot,
-    stage === "playing" ? styles.playing : "",
+    stage === "playing" || feedbackSpeaking ? styles.playing : "",
     stage === "recording" ? styles.recording : "",
     stage === "processing" ? styles.processing : "",
     stage === "done" || stage === "finished" ? styles.done : "",
@@ -507,7 +551,11 @@ export default function InterviewClient() {
           {stage === "done" && (
             <>
               {hasMoreQuestions && (
-                <button className={styles.btnPrimary} onClick={nextQuestion}>
+                <button
+                  className={styles.btnPrimary}
+                  onClick={nextQuestion}
+                  disabled={feedbackSpeaking}
+                >
                   Next Question
                 </button>
               )}
@@ -560,14 +608,21 @@ export default function InterviewClient() {
         {reviewContext && (
           <>
             <div className={styles.divider} />
-            <ScorecardPanel sessionInput={reviewContext} showShellBadge={false} />
+            <ScorecardPanel
+              sessionInput={reviewContext}
+              showShellBadge={false}
+              onFeedbackReady={handlePerQuestionFeedbackReady}
+            />
           </>
         )}
 
         {sessionPayload && stage === "finished" && (
           <>
             <div className={styles.divider} />
-            <SessionScorecardPanel sessionInput={sessionPayload} />
+            <SessionScorecardPanel
+              sessionInput={sessionPayload}
+              onFeedbackReady={handleSessionFeedbackReady}
+            />
           </>
         )}
       </div>
