@@ -11,7 +11,8 @@ For setup and running instructions see the [root README](../README.md).
 | POST   | `/speech/tts`        | done   | Text → WAV audio via Groq Orpheus TTS                    |
 | POST   | `/speech/transcribe` | done   | Audio file → per-segment transcript + emotion scores     |
 | POST   | `/emotion/analyze`   | done   | Audio file → single arousal / dominance / valence score  |
-| POST   | `/feedback/generate` | todo   | Transcript + scores + question → structured LLM feedback |
+| POST   | `/feedback/generate`         | done   | Transcript + scores + question → per-answer LLM feedback (Groq)           |
+| POST   | `/feedback/generate-session` | done   | Multiple Q&A pairs → holistic session feedback + per-question reviews      |
 
 ## Structure
 
@@ -26,9 +27,10 @@ services/
     emotion_model.py            — model class definitions (do not modify)
     run_emotion.py              — standalone CLI for testing the model directly
   llm/
-    router.py                   — POST /feedback/generate (not yet implemented)
+    router.py                   — POST /feedback/generate and POST /feedback/generate-session (Groq LLM feedback)
+    schemas.py                  — Pydantic request/response models for feedback endpoints
   text_analysis/
-    router.py                   — reserved for transcript scoring (not yet implemented)
+    router.py                   — reserved — no endpoints yet
 ```
 
 ## POST /speech/tts
@@ -92,6 +94,75 @@ Scores a full audio file as a single arousal / dominance / valence reading. Used
 curl -X POST http://localhost:8000/emotion/analyze \
   -F "file=@path/to/audio.mp3"
 ```
+
+## POST /feedback/generate
+
+Generates per-answer feedback using Groq (`openai/gpt-oss-20b`). Accepts a question and full transcript with per-segment delivery scores; returns transcript quality scores, qualitative feedback, and a model answer.
+
+**Request body (JSON):**
+```json
+{
+  "question": { "id": "1", "text": "Tell me about yourself." },
+  "transcript": {
+    "text": "I have three years of experience...",
+    "segments": [
+      { "start": 0.0, "end": 2.4, "text": "I have three years...", "arousal": 0.61, "dominance": 0.55, "valence": 0.32 }
+    ]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "transcriptScores": { "clarity": 0.8, "structure": 0.7, "relevance": 0.9, "conciseness": 0.75 },
+  "feedback": {
+    "summary": "You answered confidently and stayed on topic.",
+    "strengths": ["Strong opening", "Specific examples"],
+    "improvements": ["Tighten the closing", "Vary your pace"],
+    "deliveryNotes": "Your arousal stayed high throughout — good energy."
+  },
+  "modelAnswer": { "text": "I have three years of experience in..." }
+}
+```
+
+Requires `GROQ_API_KEY` in `backend/.env`.
+
+## POST /feedback/generate-session
+
+Generates holistic session feedback across all answers in a single Groq call. Accepts an array of question + transcript pairs; returns session-level summary and per-question reviews.
+
+**Request body (JSON):**
+```json
+{
+  "answers": [
+    {
+      "question": { "id": "1", "text": "Tell me about yourself." },
+      "transcript": { "text": "...", "segments": [ ... ] }
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "overallSummary": "You showed consistent confidence across questions.",
+  "overallStrengths": ["Clear communication", "Strong examples"],
+  "overallImprovements": ["Improve conciseness", "Vary sentence structure"],
+  "overallDeliveryNotes": "Arousal trended high — sustained energy throughout.",
+  "questionReviews": [
+    {
+      "question": { "id": "1", "text": "Tell me about yourself." },
+      "transcriptScores": { "clarity": 0.8, "structure": 0.7, "relevance": 0.9, "conciseness": 0.75 },
+      "feedback": { "summary": "...", "strengths": [], "improvements": [], "deliveryNotes": "..." },
+      "modelAnswer": { "text": "..." }
+    }
+  ]
+}
+```
+
+Requires `GROQ_API_KEY` in `backend/.env`.
 
 ## Score interpretation
 

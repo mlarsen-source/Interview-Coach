@@ -37,16 +37,18 @@ Check for:
 - mixed old/new flows that prevent a clean fallback
 - changes that partially switch a feature without fully gating it
 
-### 3. Feature-flag involvement
+### 3. Env-var or behavioral mode changes
 
-If the diff touches anything related to feature flags or env-gated behavior (`featureFlag`, `featureGate`, `NEXT_PUBLIC_*` toggles, `flags`, or similar):
+If the diff introduces or modifies `NEXT_PUBLIC_*` env vars used for behavioral gating (not just API base URL configuration), or adds new behavioral mode branches with distinct execution paths:
 
 - Note which files and call sites are involved
-- Ask the user: "Feature flag changes detected. Would you like me to run the feature flag gating review before continuing the audit?"
+- Ask the user: "Behavioral gating changes detected. Would you like me to run the feature flag gating review before continuing the audit?"
 - If the user says yes, read and run `docs/agent-workflows/feature-flag-gating-review.md` and include its output as a subsection before continuing
 - If the user says no, note it and continue the audit without the flag review
 
-If no flag involvement is detected, state that explicitly and continue.
+This project has no formal feature flag registry. Simple UI state variables like `feedbackMode` do not require this review unless their branching logic is complex.
+
+If no env-var or behavioral mode changes are detected, state that explicitly and continue.
 
 ### 4. Integration consistency
 

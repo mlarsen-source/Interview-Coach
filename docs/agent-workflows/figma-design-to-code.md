@@ -62,7 +62,7 @@ The MCP reference output is generic React + Tailwind. Before implementing:
 - [ ] Recording/scorecard UI uses presentational components with mock-friendly props for Storybook
 - [ ] No backend secrets in client code; API calls go through the FastAPI client module
 
-There is no shared `app/components/ui/` library yet — reuse existing components in the branch or create new ones with `.module.css` + `.stories.tsx` per `AGENTS.md`.
+There is no shared `app/components/ui/` library yet — reuse existing components in the branch or create new ones with `.module.css` + `.stories.tsx` per `AGENTS.md`. Note: the `storybook` script is not yet in `frontend/package.json`; create stories alongside components regardless — they are required by convention even before the script is wired up.
 
 ### Step 3 — Map design tokens
 
