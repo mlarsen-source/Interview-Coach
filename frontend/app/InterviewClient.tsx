@@ -7,6 +7,7 @@ import {
   type InterviewQuestion,
 } from "@/lib/prompts/questions";
 import { INTERVIEWERS, DEFAULT_INTERVIEWER, type Interviewer } from "@/lib/prompts/interviewers";
+import { MicWaveform, type MicWaveformHandle } from "@/app/components/MicWaveform/MicWaveform";
 import { ScorecardPanel } from "@/app/scorecard/ScorecardPanel";
 import { buildReviewContext } from "@/lib/interview-coach/sessionAdapter";
 import type { ReviewContextPayload } from "@/lib/interview-coach/types";
@@ -79,6 +80,7 @@ export default function InterviewClient() {
   const rafRef = useRef<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const usedIdsRef = useRef<Set<number>>(new Set());
+  const waveformRef = useRef<MicWaveformHandle>(null);
 
   const newAbort = useCallback((): AbortSignal => {
     abortRef.current?.abort();
@@ -178,6 +180,7 @@ export default function InterviewClient() {
       if (!audioCtxRef.current) return;
       analyser.getFloatTimeDomainData(buf);
       const rms = Math.sqrt(buf.reduce((s, v) => s + v * v, 0) / buf.length);
+      waveformRef.current?.drawWaveform(buf, rms);
       if (rms >= SILENCE_THRESHOLD) {
         hasSpokeRef.current = true;
         setShowDonePrompt(false);
@@ -316,6 +319,10 @@ export default function InterviewClient() {
           <span className={dotClass} />
           <span>{statusText}</span>
         </div>
+
+        {stage === "recording" && (
+          <MicWaveform ref={waveformRef} active speechThreshold={SILENCE_THRESHOLD} />
+        )}
 
         {showDonePrompt && (
           <div className={styles.donePrompt}>
