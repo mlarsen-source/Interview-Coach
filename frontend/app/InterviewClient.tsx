@@ -8,6 +8,7 @@ import {
   type InterviewQuestion,
 } from "@/lib/prompts/questions";
 import { INTERVIEWERS, DEFAULT_INTERVIEWER, type Interviewer } from "@/lib/prompts/interviewers";
+import { MicWaveform, type MicWaveformHandle } from "@/app/components/MicWaveform/MicWaveform";
 import { ScorecardPanel } from "@/app/scorecard/ScorecardPanel";
 import { SessionScorecardPanel } from "@/app/scorecard/SessionScorecardPanel";
 import { buildReviewContext } from "@/lib/interview-coach/sessionAdapter";
@@ -99,6 +100,7 @@ export default function InterviewClient() {
   const pendingEndRef = useRef(false);
   const questionRef = useRef<InterviewQuestion | null>(null);
   const savedAnswersRef = useRef<ReviewContextPayload[]>([]);
+  const waveformRef = useRef<MicWaveformHandle>(null);
 
   useEffect(() => {
     questionRef.current = question;
@@ -259,6 +261,7 @@ export default function InterviewClient() {
       if (!audioCtxRef.current) return;
       analyser.getFloatTimeDomainData(buf);
       const rms = Math.sqrt(buf.reduce((s, v) => s + v * v, 0) / buf.length);
+      waveformRef.current?.drawWaveform(buf, rms);
       if (rms >= SILENCE_THRESHOLD) {
         hasSpokeRef.current = true;
         setShowDonePrompt(false);
@@ -462,6 +465,10 @@ export default function InterviewClient() {
           <span className={dotClass} />
           <span>{statusText}</span>
         </div>
+
+        {stage === "recording" && (
+          <MicWaveform ref={waveformRef} active speechThreshold={SILENCE_THRESHOLD} />
+        )}
 
         {showDonePrompt && (
           <div className={styles.donePrompt}>
