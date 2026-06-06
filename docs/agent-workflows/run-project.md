@@ -4,115 +4,297 @@
 
 **Before running anything**, the agent must confirm with the user:
 
-> "Ready to start Interview Coach. This will launch the backend (port 8000) and frontend (port 3000). Confirm?"
+> "Ready to start Interview Coach. This will launch the backend (port 8000) and frontend (port 3000).
+> Before I start — have you accepted the Groq Orpheus TTS terms for your account? This is required for the interviewer voice. Visit https://console.groq.com/playground?model=canopylabs%2Forpheus-v1-english to accept if you haven't yet.
+> Confirm start?"
 
-Only after the user confirms does the agent proceed. The agent starts both services without any terminal input from the user. It must assess current project state first and run only what is necessary.
+Only after the user confirms does the agent proceed. The agent starts both services without any terminal input from the user.
+
+**Required order:** detect OS → check OS prerequisites → fix OS prerequisites → assess project state → fix project prerequisites → start backend → start frontend → report.
 
 ---
 
-## Step 1 — Assess project state
+## Step 1 — Detect OS and terminal
 
-Run all checks in parallel before doing anything:
+Run this first. Every subsequent step uses platform-specific commands — do not skip this.
 
 ```bash
-# 1. Does the Python venv exist?
-test -d venv && echo "venv:ok" || echo "venv:missing"
-
-# 2. Are backend dependencies installed? (spot-check key packages)
-venv/Scripts/python -c "import fastapi, groq, uvicorn" 2>/dev/null && echo "deps:ok" || echo "deps:missing"
-
-# 3. Does backend/.env exist and have GROQ_API_KEY set?
-test -f backend/.env && grep -q "GROQ_API_KEY=." backend/.env && echo "env:ok" || echo "env:missing"
-
-# 4. Are frontend node_modules installed?
-test -d frontend/node_modules && echo "node:ok" || echo "node:missing"
-
-# 7. Has the user confirmed Groq Orpheus terms? (cannot check programmatically — ask explicitly)
-# See Step 2 below for how to handle this.
-
-# 5. Is port 8000 already in use?
-netstat -an 2>/dev/null | grep ":8000" | grep LISTEN && echo "port8000:busy" || echo "port8000:free"
-
-# 6. Is port 3000 already in use?
-netstat -an 2>/dev/null | grep ":3000" | grep LISTEN && echo "port3000:busy" || echo "port3000:free"
+uname -s
 ```
 
-On Windows use PowerShell equivalents:
+| Result                        | Platform                   | Use commands labeled…        |
+| ----------------------------- | -------------------------- | -----------------------------|
+| `Darwin`                      | macOS                      | **macOS**                    |
+| `Linux`                       | Linux                      | **Linux**                    |
+| `MINGW64_NT-*` / `MSYS_NT-*`  | Windows — Git Bash / WSL   | **Windows (Git Bash)**       |
+| command not found / error     | Unknown — ask the user     | —                            |
+
+If `uname` is not found or returns an unrecognized value, ask the user:
+
+> "What terminal and OS are you using? For example: Windows PowerShell, Windows Git Bash, macOS Terminal, or Linux."
+
+Use their answer to select the correct platform label for all remaining steps.
+
+Carry the detected platform label through all remaining steps.
+
+---
+
+## Step 2 — Check OS prerequisites
+
+Run all checks in parallel using the commands for the detected platform. All four must pass before touching the venv or any project-level setup.
+
+### Windows (PowerShell)
+
 ```powershell
+python --version
+node --version
+pnpm --version
+ffmpeg -version
+```
+
+### macOS
+
+```bash
+brew --version      # Homebrew — required for macOS installs
+python3 --version
+node --version
+pnpm --version
+ffmpeg -version
+```
+
+### Linux
+
+```bash
+python3 --version
+node --version
+pnpm --version
+ffmpeg -version
+```
+
+### Windows (Git Bash)
+
+```bash
+python --version    # Windows Git Bash — use python, not python3
+node --version
+pnpm --version
+ffmpeg -version
+```
+
+If any check fails, go to Step 3. Do not proceed to Step 4 until all pass.
+
+---
+
+## Step 3 — Fix missing OS prerequisites
+
+Address only what failed in Step 2. Hard stops require the user to act — do not proceed past them.
+
+### Homebrew missing (macOS only)
+
+Homebrew is required on macOS to install Python, ffmpeg, and other tools. **Hard stop** — tell the user and do not install programmatically.
+
+> "Homebrew is required on macOS. Install it by running this in Terminal:
+> `/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"`
+> After it finishes, follow any instructions it prints about adding brew to your PATH (this is required on Apple Silicon Macs). Then open a new terminal and try again."
+
+> **Apple Silicon (M1/M2/M3):** Homebrew installs to `/opt/homebrew` instead of `/usr/local`. The installer prints the exact PATH commands to run — do not skip that step or `brew` will not be found in new terminals.
+
+After Homebrew is installed, re-run `brew --version` to confirm, then continue with the checks below.
+
+### Python missing or wrong version
+
+Minimum: Python 3.9. **Hard stop** — tell the user and do not install programmatically.
+
+| Platform          | Instruction                                                                                              |
+| ----------------- | -------------------------------------------------------------------------------------------------------- |
+| Windows           | Download from https://python.org/downloads — check "Add Python to PATH" during install, then restart terminal |
+| macOS             | `brew install python3` (requires Homebrew — see above) or download from https://python.org/downloads     |
+| Linux             | `sudo apt install python3 python3-venv` (or distro equivalent)                                          |
+
+After installing, open a new terminal and re-run `python3 --version` (or `python --version` on Windows) before continuing.
+
+### Node.js missing or wrong version
+
+Minimum: Node.js 18 (LTS). **Hard stop** — tell the user and do not install programmatically.
+
+All platforms: download from https://nodejs.org and choose the LTS release. After installing, open a new terminal and re-run `node --version`.
+
+### pnpm missing
+
+Requires Node.js to be installed first.
+
+```bash
+npm install -g pnpm
+```
+
+Same command on all platforms. Verify with `pnpm --version`.
+
+### ffmpeg missing
+
+ffmpeg must be installed at the OS level and on the system PATH. Without it the backend cannot decode audio — transcription and emotion analysis fail silently at request time even though the backend starts fine.
+
+| Platform          | Install command                                            | Notes                                          |
+| ----------------- | ---------------------------------------------------------- | ---------------------------------------------- |
+| Windows           | `choco install ffmpeg` (requires an admin terminal)        | Restart the terminal after installing           |
+| macOS             | `brew install ffmpeg`                                      |                                                |
+| Ubuntu / Debian   | `sudo apt install ffmpeg`                                  |                                                |
+| Fedora / RHEL     | `sudo dnf install ffmpeg`                                  |                                                |
+| Arch              | `sudo pacman -S ffmpeg`                                    |                                                |
+
+After installing, verify with `ffmpeg -version`. On Windows you must open a new terminal before ffmpeg is on the PATH.
+
+**Hard stop:** provide the platform-specific install command, then wait for the user to confirm it is installed and `ffmpeg -version` passes before continuing.
+
+---
+
+## Step 4 — Assess project state
+
+Once all OS prerequisites pass, run these checks in parallel.
+
+### Windows (PowerShell)
+
+```powershell
+# venv exists?
 Test-Path venv
+
+# Backend deps installed?
 venv\Scripts\python -c "import fastapi, groq, uvicorn"
+
+# backend/.env present and GROQ_API_KEY set?
 Test-Path backend\.env
 (Get-Content backend\.env) -match "GROQ_API_KEY=."
+
+# Frontend node_modules installed?
 Test-Path frontend\node_modules
+
+# Ports free?
 netstat -an | Select-String ":8000.*LISTENING"
 netstat -an | Select-String ":3000.*LISTENING"
 ```
 
+### Windows (Git Bash)
+
+```bash
+test -d venv && echo "venv:ok" || echo "venv:missing"
+venv/Scripts/python -c "import fastapi, groq, uvicorn" 2>/dev/null && echo "deps:ok" || echo "deps:missing"
+test -f backend/.env && grep -q "GROQ_API_KEY=." backend/.env && echo "env:ok" || echo "env:missing"
+test -d frontend/node_modules && echo "node_modules:ok" || echo "node_modules:missing"
+netstat -an | grep ":8000" | grep -q LISTEN && echo "port8000:busy" || echo "port8000:free"
+netstat -an | grep ":3000" | grep -q LISTEN && echo "port3000:busy" || echo "port3000:free"
+```
+
+### macOS / Linux
+
+```bash
+test -d venv && echo "venv:ok" || echo "venv:missing"
+venv/bin/python -c "import fastapi, groq, uvicorn" 2>/dev/null && echo "deps:ok" || echo "deps:missing"
+test -f backend/.env && grep -q "GROQ_API_KEY=." backend/.env && echo "env:ok" || echo "env:missing"
+test -d frontend/node_modules && echo "node_modules:ok" || echo "node_modules:missing"
+lsof -i :8000 > /dev/null 2>&1 && echo "port8000:busy" || echo "port8000:free"
+lsof -i :3000 > /dev/null 2>&1 && echo "port3000:busy" || echo "port3000:free"
+```
+
 ---
 
-## Step 2 — Fix missing prerequisites
+## Step 5 — Fix missing project prerequisites
 
-Run only what is needed based on Step 1 results. Do not re-run steps that already passed.
+Run only what is needed based on Step 4. Do not re-run steps that already passed.
 
 ### venv missing
+
+**Windows (PowerShell / Git Bash):**
 ```bash
 python -m venv venv
 ```
 
-### Python dependencies missing
+**macOS / Linux:**
 ```bash
-source venv/Scripts/activate   # Windows Git Bash
-# venv/bin/activate             # macOS / Linux
+python3 -m venv venv
+```
+
+### Python dependencies missing
+
+Activate the venv first, then install.
+
+**Windows (PowerShell):**
+```powershell
+venv\Scripts\Activate.ps1
 pip install -r backend/requirements.txt
 ```
-This may take several minutes on first run (torch, transformers are large). Inform the user.
+
+**Windows (Git Bash):**
+```bash
+source venv/Scripts/activate
+pip install -r backend/requirements.txt
+```
+
+**macOS / Linux:**
+```bash
+source venv/bin/activate
+pip install -r backend/requirements.txt
+```
+
+This may take several minutes on first run — torch and transformers are large. Inform the user.
 
 ### backend/.env missing or GROQ_API_KEY not set
-**Stop and tell the user.** Do not attempt to start the backend.
-Message: "backend/.env is missing or GROQ_API_KEY is not set. Please add your key to backend/.env before running. See backend/.env.example for the format."
 
-### Groq Orpheus TTS terms not accepted
-This cannot be checked programmatically. **Always ask during the confirmation step** (before Step 1 checks run):
+**Hard stop.** Tell the user:
+> "backend/.env is missing or GROQ_API_KEY is not set. Please add your key to backend/.env before running. See backend/.env.example for the format."
 
-> "Before I start — have you accepted the Groq Orpheus TTS terms for your account? This is a one-time step required for the interviewer voice to work. Visit https://console.groq.com/playground?model=canopylabs%2Forpheus-v1-english and click Accept if you haven't yet."
-
-- If the user says **yes / already done**: proceed normally.
-- If the user says **no / not yet**: direct them to accept first, then re-confirm before starting.
-- If the user is **unsure**: tell them to visit the URL and check — it's safe to visit even if terms are already accepted (the banner simply won't appear).
-
-**Symptom if skipped:** the backend starts without error, but every call to `POST /speech/tts` returns a 400 and the frontend shows "Could not load audio — check the backend is running." The recording flow still works; only the interviewer voice is silent.
+Do not start the backend.
 
 ### frontend/node_modules missing
+
+Same on all platforms:
 ```bash
 cd frontend && pnpm install
 ```
 
 ### Port already in use
-Inform the user which port is occupied and by what process if determinable. Ask whether to proceed (the existing process may already be the running app).
+
+Identify which port is occupied and, if determinable, which process holds it. Ask the user whether to proceed — the existing process may already be the running app. Do not kill an unknown process without asking.
+
+**Windows (PowerShell):**
+```powershell
+Get-NetTCPConnection -LocalPort 8000 | Select-Object OwningProcess
+Get-Process -Id <OwningProcess>
+```
+
+**macOS / Linux / Git Bash:**
+```bash
+lsof -i :8000
+lsof -i :3000
+```
 
 ---
 
-## Step 3 — Start the backend
+## Step 6 — Start the backend
 
 Run in background. The emotion model loads at startup — first run downloads ~1 GB and takes longer.
 
+**Windows (PowerShell):**
+```powershell
+venv\Scripts\Activate.ps1
+cd backend
+uvicorn app:app --reload
+```
+
+**Windows (Git Bash):**
 ```bash
-# Bash
 source venv/Scripts/activate && cd backend && uvicorn app:app --reload
 ```
 
-```powershell
-# PowerShell
-venv\Scripts\activate; cd backend; uvicorn app:app --reload
+**macOS / Linux:**
+```bash
+source venv/bin/activate && cd backend && uvicorn app:app --reload
 ```
 
-Use `run_in_background: true`. Wait for the `Application startup complete` message before starting the frontend. Monitor the output — if startup fails (missing env var, model load error, port conflict), report the error and stop.
+Use `run_in_background: true`. Wait for `Application startup complete` in the output before starting the frontend. If startup fails (missing env var, model load error, port conflict), report the error and stop.
 
 ---
 
-## Step 4 — Start the frontend
+## Step 7 — Start the frontend
 
-Run in background after backend startup is confirmed.
+Same command on all platforms. Run in background after backend startup is confirmed.
 
 ```bash
 cd frontend && pnpm dev
@@ -122,7 +304,7 @@ Use `run_in_background: true`.
 
 ---
 
-## Step 5 — Report to the user
+## Step 8 — Report to the user
 
 Once both are running, report:
 
@@ -139,19 +321,16 @@ If the emotion model is downloading for the first time, note that the backend wi
 
 If the user says "stop the project", "stop the app", or "kill the servers":
 
-1. Find uvicorn and the Next.js dev server processes
-2. Terminate them
-
-```bash
-# Bash — find and kill by port
-lsof -ti:8000 | xargs kill -9
-lsof -ti:3000 | xargs kill -9
-```
-
+**Windows (PowerShell):**
 ```powershell
-# PowerShell
 Stop-Process -Id (Get-NetTCPConnection -LocalPort 8000).OwningProcess -Force
 Stop-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess -Force
+```
+
+**macOS / Linux / Git Bash:**
+```bash
+lsof -ti:8000 | xargs kill -9
+lsof -ti:3000 | xargs kill -9
 ```
 
 ---
@@ -160,10 +339,15 @@ Stop-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess -Force
 
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
-| `ModuleNotFoundError: No module named 'fastapi'` | venv not activated or deps not installed | Run Step 2 |
-| `OSError: [Errno 98] Address already in use` | Port occupied | Check existing process; kill or use different port |
+| `python: command not found` | Python not installed or not on PATH | Install Python 3.9+ (Step 3); use `python3` on macOS/Linux |
+| `node: command not found` | Node.js not installed or not on PATH | Install Node.js 18+ from nodejs.org (Step 3) |
+| `pnpm: command not found` | pnpm not installed | `npm install -g pnpm` (Step 3) |
+| `ffmpeg: command not found` / audio fails at runtime | ffmpeg not on PATH | Install ffmpeg (Step 3), restart terminal, verify with `ffmpeg -version` |
+| `ModuleNotFoundError: No module named 'fastapi'` | venv not activated or deps not installed | Run Step 5 with platform-correct activate path |
+| `OSError: [Errno 98] Address already in use` | Port occupied | Check existing process (Step 5); ask user before killing |
 | `groq.AuthenticationError` | GROQ_API_KEY missing or wrong | Check `backend/.env` |
-| `ERR_PNPM_OUTDATED_LOCKFILE` | lockfile out of sync | Run `cd frontend && pnpm install` |
+| `ERR_PNPM_OUTDATED_LOCKFILE` | lockfile out of sync | `cd frontend && pnpm install` |
 | Backend starts but emotion model never loads | First run downloading weights | Wait — normal on first run, ~1 GB |
 | TTS returns 400 or 502 | Orpheus terms not accepted for this Groq account | Visit `https://console.groq.com/playground?model=canopylabs%2Forpheus-v1-english` and click Accept |
-| Frontend shows "Could not load audio" | Orpheus terms not accepted, or `GROQ_API_KEY` wrong | Check terms first (see above), then verify key in `backend/.env` |
+| Frontend shows "Could not load audio" | Orpheus terms not accepted, or `GROQ_API_KEY` wrong | Check terms first, then verify key in `backend/.env` |
+| `venv\Scripts\Activate.ps1 cannot be loaded` | PowerShell execution policy blocks scripts | Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` then retry |
