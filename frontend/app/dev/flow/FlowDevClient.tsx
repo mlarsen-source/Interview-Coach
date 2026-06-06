@@ -6,7 +6,6 @@ import { ScorecardPanel } from "@/app/scorecard/ScorecardPanel";
 import { FlowStageCard } from "@/app/dev/flow/components/FlowStageCard/FlowStageCard";
 import { aggregateReviewPayload } from "@/lib/interview-coach/aggregateReviewPayload";
 import {
-  mockDeliveryScores,
   mockModelAnswer,
   mockQualitativeFeedback,
   mockQuestion,
@@ -58,38 +57,36 @@ export function FlowDevClient() {
           stage.output = mockTranscript;
           break;
         case "audioScores":
-          stage.input = { audio: MOCK_RECORDING };
-          stage.output = mockDeliveryScores;
-          break;
-        case "transcriptScores":
           stage.input = { transcript: mockTranscript };
-          stage.output = mockTranscriptScores;
+          stage.output = mockTranscript.segments.map((s) => ({
+            start: s.start,
+            end: s.end,
+            arousal: s.arousal,
+            dominance: s.dominance,
+            valence: s.valence,
+          }));
           break;
         case "aggregate": {
           const payload = aggregateReviewPayload({
             question: mockQuestion,
             transcript: mockTranscript,
-            deliveryScores: mockDeliveryScores,
-            transcriptScores: mockTranscriptScores,
           });
-          stage.input = {
-            question: mockQuestion,
-            transcript: mockTranscript,
-            deliveryScores: mockDeliveryScores,
-            transcriptScores: mockTranscriptScores,
-          };
+          stage.input = { question: mockQuestion, transcript: mockTranscript };
           stage.output = payload;
           break;
         }
+        case "transcriptScores":
+          stage.input = { context: "ReviewContextPayload" };
+          stage.output = mockTranscriptScores;
+          break;
         case "llmFeedback": {
           const payload = aggregateReviewPayload({
             question: mockQuestion,
             transcript: mockTranscript,
-            deliveryScores: mockDeliveryScores,
-            transcriptScores: mockTranscriptScores,
           });
           stage.input = payload;
           stage.output = {
+            transcriptScores: mockTranscriptScores,
             feedback: mockQualitativeFeedback,
             modelAnswer: mockModelAnswer,
           };
@@ -99,11 +96,10 @@ export function FlowDevClient() {
           const context = aggregateReviewPayload({
             question: mockQuestion,
             transcript: mockTranscript,
-            deliveryScores: mockDeliveryScores,
-            transcriptScores: mockTranscriptScores,
           });
           const result: SessionReviewResult = {
             context,
+            transcriptScores: mockTranscriptScores,
             feedback: mockQualitativeFeedback,
             modelAnswer: mockModelAnswer,
           };
@@ -138,7 +134,6 @@ export function FlowDevClient() {
   const loadingFlags = useMemo(() => {
     const done = (id: PipelineStage["id"]) => stages.find((s) => s.id === id)?.status === "done";
     return {
-      loadingDelivery: !done("audioScores"),
       loadingTranscriptScores: !done("transcriptScores"),
       loadingFeedback: !done("llmFeedback"),
     };
@@ -171,9 +166,9 @@ export function FlowDevClient() {
         </h2>
         <ScorecardPanel
           result={sessionResult}
-          loadingDelivery={loadingFlags.loadingDelivery && stepIndex >= 0}
           loadingTranscriptScores={loadingFlags.loadingTranscriptScores && stepIndex >= 0}
           loadingFeedback={loadingFlags.loadingFeedback && stepIndex >= 0}
+          showShellBadge
         />
       </section>
     </div>

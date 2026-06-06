@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
 import {
-  mockDeliveryScores,
   mockModelAnswer,
   mockQualitativeFeedback,
   mockQuestion,
@@ -28,7 +27,6 @@ export const PartialScoresOnly: Story = {
   args: {
     question: mockQuestion,
     transcript: mockTranscript,
-    deliveryScores: mockDeliveryScores,
     transcriptScores: mockTranscriptScores,
   },
 };
@@ -37,7 +35,6 @@ export const Full: Story = {
   args: {
     question: mockQuestion,
     transcript: mockTranscript,
-    deliveryScores: mockDeliveryScores,
     transcriptScores: mockTranscriptScores,
     feedback: mockQualitativeFeedback,
     modelAnswer: mockModelAnswer,
@@ -48,7 +45,6 @@ export const LoadingFeedback: Story = {
   args: {
     question: mockQuestion,
     transcript: mockTranscript,
-    deliveryScores: mockDeliveryScores,
     transcriptScores: mockTranscriptScores,
     loadingFeedback: true,
   },

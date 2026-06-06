@@ -7,6 +7,9 @@ import {
   type InterviewQuestion,
 } from "@/lib/prompts/questions";
 import { INTERVIEWERS, DEFAULT_INTERVIEWER, type Interviewer } from "@/lib/prompts/interviewers";
+import { ScorecardPanel } from "@/app/scorecard/ScorecardPanel";
+import { buildReviewContext } from "@/lib/interview-coach/sessionAdapter";
+import type { ReviewContextPayload } from "@/lib/interview-coach/types";
 import styles from "./InterviewClient.module.css";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -62,6 +65,7 @@ export default function InterviewClient() {
   const [showQuestion, setShowQuestion] = useState(false);
   const [showDonePrompt, setShowDonePrompt] = useState(false);
   const [segments, setSegments] = useState<Segment[]>([]);
+  const [reviewContext, setReviewContext] = useState<ReviewContextPayload | null>(null);
   const [statusText, setStatusText] = useState(
     "Select your interviewer and press Start Interview."
   );
@@ -198,6 +202,7 @@ export default function InterviewClient() {
     setQuestion(firstQuestion);
     setQuestionNumber(1);
     setSegments([]);
+    setReviewContext(null);
     setShowQuestion(false);
     setStage("playing");
     setStatusText(`${interviewer.name} is introducing themselves…`);
@@ -223,6 +228,7 @@ export default function InterviewClient() {
     setQuestion(next);
     setQuestionNumber((n) => n + 1);
     setSegments([]);
+    setReviewContext(null);
     setShowQuestion(false);
     setShowDonePrompt(false);
     setStage("playing");
@@ -239,6 +245,11 @@ export default function InterviewClient() {
     setShowQuestion(true);
     startRecording();
   }, [interviewer, newAbort, stopRecording, startRecording]);
+
+  const hearFeedback = useCallback(() => {
+    if (!question || segments.length === 0) return;
+    setReviewContext(buildReviewContext(question, segments));
+  }, [question, segments]);
 
   const dotClass = [
     styles.dot,
@@ -337,7 +348,11 @@ export default function InterviewClient() {
               <button className={styles.btnPrimary} onClick={nextQuestion}>
                 Next Question
               </button>
-              <button className={styles.btnSecondary} disabled title="Coming soon">
+              <button
+                className={styles.btnSecondary}
+                onClick={hearFeedback}
+                disabled={segments.length === 0 || reviewContext !== null}
+              >
                 Hear Feedback
               </button>
             </>
@@ -362,6 +377,13 @@ export default function InterviewClient() {
                 </div>
               ))}
             </div>
+          </>
+        )}
+
+        {reviewContext && (
+          <>
+            <div className={styles.divider} />
+            <ScorecardPanel sessionInput={reviewContext} />
           </>
         )}
       </div>
