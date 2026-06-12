@@ -1,10 +1,10 @@
-# Code Quality Review
+# Code Review
 
 ## Purpose
 
 Reviews the **quality of the implementation** — correctness, performance, architectural conventions, React patterns, and test coverage gaps. When component or styling files are detected, offers to run the CSS and component standards review.
 
-**Does not:** summarize what changed on the branch (that is `branch-change-impact-audit.md`). Does not audit feature flag gating, generate QA checklists, or perform deep CSS/styling review independently. Those are separate workflows.
+**Does not:** summarize what changed on the branch (that is `branch-audit.md`). Does not audit feature flag gating, generate QA checklists, or perform deep CSS/styling review independently. Those are separate workflows.
 
 ---
 
@@ -17,7 +17,7 @@ Perform a strict, scoped code quality review of a feature branch.
 - Do not invent issues
 - State issues plainly and specifically — do not soften findings with hedging language or qualify every point with "consider" or "you might want to"
 
-## Before review
+## Preparation
 
 - Read `AGENTS.md` (and [README.md](../../README.md) for full-stack context) to load project conventions, hard rules, and architecture patterns
 - Read commit messages or the PR description to understand the intent of the changes
@@ -205,7 +205,7 @@ Changed files are those returned by `git diff --name-only origin/main...HEAD` (o
 
 If a command is unavailable or fails to execute, state which one and why.
 
-## Required output format
+## Output
 
 ### Context
 
@@ -264,7 +264,7 @@ Check the changed file list for any `.tsx`, `.jsx`, `.module.css`, or `.stories.
 
 If any are present, ask the user: "Component or styling files were changed. Would you like me to run the CSS and component standards review now?"
 
-- If yes, read and run `docs/agent-workflows/css-and-component-standards-review.md` and present its output as a separate section.
+- If yes, read and run `docs/agent-workflows/css-review.md` and present its output as a separate section.
 - If no, note that the CSS review was declined and conclude.
 
 If no component or styling files are present, state "No component or styling files changed — CSS review not applicable" and conclude.

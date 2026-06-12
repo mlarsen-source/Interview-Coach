@@ -1,10 +1,17 @@
-# Manual QA Checklist Generator
+# QA Checklist
 
 ## Purpose
 
 Generates a **practical, scoped manual testing checklist** based on the current branch diff — preconditions, primary success-path scenarios, edge cases, and mode-dependent checks. Produces a guide a developer or reviewer can run by hand.
 
-**Does not:** automate testing, run test commands, review code quality, or produce a comprehensive test plan. Scope is strictly manual verification of the changed behavior — automated test quality is covered by `test-suite-quality-review.md`.
+**Does not:** automate testing, run test commands, review code quality, or produce a comprehensive test plan. Scope is strictly manual verification of the changed behavior — automated test quality is covered by `test-review.md`.
+
+---
+
+## Preparation
+
+- Read `AGENTS.md` to load pipeline architecture and feedback mode definitions.
+- Run `git diff --name-only origin/main...HEAD` to enumerate changed files and understand the scope of the diff.
 
 ---
 
@@ -55,7 +62,7 @@ Also include checks for the full scorecard rendering path: DeliveryScores (arous
 - Do not include low-value or purely theoretical checks
 - Do not expand into a full test plan unless explicitly requested
 
-## Required output format
+## Output
 
 ### Setup
 

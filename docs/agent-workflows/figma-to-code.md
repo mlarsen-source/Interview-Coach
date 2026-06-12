@@ -1,31 +1,22 @@
-# Figma Design to Code
+# Figma to Code
 
 ## Purpose
 
 Guides **implementation of UI from a Figma design** — extracting designs via MCP tools, adapting reference code to the Interview Coach frontend stack, mapping design tokens to `app/globals.css`, and verifying component compliance before marking work complete.
 
-**Does not:** review existing code, perform standalone CSS review, or assess code quality independently of a design task. Styling and component standards are defined in `AGENTS.md` and `css-and-component-standards-review.md` — this workflow references those standards rather than restating them.
+**Does not:** review existing code, perform standalone CSS review, or assess code quality independently of a design task. Styling and component standards are defined in `AGENTS.md` and `css-review.md` — this workflow references those standards rather than restating them.
 
 ---
 
 Use this workflow when implementing UI from a Figma design, extracting design tokens, or auditing a component against its Figma spec.
 
-## Access
+## Preparation
 
+- Read `AGENTS.md` to load component conventions (module.css, stories, Tailwind usage rules).
+- Obtain the Figma URL from the user; extract the file key and node ID.
 - **Token:** `FIGMA_PERSONAL_ACCESS_TOKEN` (or the env var your Figma MCP server expects) — set locally or via your agent secrets; never commit tokens.
-- **Design file:** Use the file key and node id from the Figma URL the user provides. This project does not ship a canonical design-system file key in-repo.
-- **MCP server:** Prefer Figma MCP tools over direct REST when both can accomplish the task.
-- **Token verification:** Before starting, confirm the token works (`GET https://api.figma.com/v1/me` with `X-Figma-Token`, or the MCP equivalent). If access fails, stop and ask the user to confirm project access.
-
-## Getting a node ID from a Figma URL
-
-```
-figma.com/design/:fileKey/:fileName?node-id=:nodeId
-```
-
-Convert `-` to `:` in the node ID (e.g. `123-456` → `123:456`).
-
-FigJam: `figma.com/board/:fileKey/...` — use `get_figjam`.
+- **Token verification:** Confirm the token works (`GET https://api.figma.com/v1/me` with `X-Figma-Token`, or the MCP equivalent). If access fails, stop and ask the user to confirm project access.
+- **Node ID format:** from `figma.com/design/:fileKey/:fileName?node-id=:nodeId` — convert `-` to `:` (e.g. `123-456` → `123:456`). For FigJam (`figma.com/board/:fileKey/...`) use `get_figjam`.
 
 ## Preferred tools
 
@@ -81,7 +72,7 @@ Wait for user confirmation when reuse vs new component is ambiguous.
 
 ### Step 5 — Implement
 
-Follow `AGENTS.md` and `css-and-component-standards-review.md` for file layout, Storybook states (recording, processing, scorecard, errors), and presentational/container split.
+Follow `AGENTS.md` and `css-review.md` for file layout, Storybook states (recording, processing, scorecard, errors), and presentational/container split.
 
 **Responsive:** Ask how breakpoints should behave; do not infer from fixed-width Figma frames.
 
@@ -102,7 +93,7 @@ Confirm each new component has `module.css` (when styled) and `stories.tsx` with
 3. List discrepancies (node id, expected vs actual)
 4. Minimal fix in module CSS or Tailwind — no unrelated redesign
 
-## Output format
+## Output
 
 - Figma file key and node id
 - Tools used and Code Connect hits/misses
@@ -117,3 +108,11 @@ Confirm each new component has `module.css` (when styled) and `stories.tsx` with
 - [ ] All meaningful visual states have Storybook stories with mock data
 - [ ] No inline `style` in product JSX
 - [ ] New components have `.module.css` when they own styles and `.stories.tsx` when they have visual states
+
+## Constraints
+
+- Do not review or refactor existing code unrelated to the Figma design task
+- Do not commit Figma access tokens or API keys
+- Do not hard-code raw hex/spacing values when a CSS token exists in `globals.css`
+- Do not infer responsive breakpoints from fixed-width Figma frames — ask the user
+- Do not use raw `<img>` or `<a>` tags — use `next/image` and `next/link`

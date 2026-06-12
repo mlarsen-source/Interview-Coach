@@ -1,22 +1,22 @@
-# CSS and Component Standards Review
+# CSS Review
 
 ## Purpose
 
 Reviews **CSS quality, module.css compliance, Tailwind-vs-module.css placement, design token usage, and Storybook story coverage** for new or modified components. Flags missing `module.css` files, missing stories, inline styles, and hard-coded values as critical issues.
 
-**Does not:** review business logic, JS correctness, or anything outside styling and component file compliance. Code correctness is covered by `code-quality-review.md`.
+**Does not:** review business logic, JS correctness, or anything outside styling and component file compliance. Code correctness is covered by `code-review.md`.
 
 ---
 
 Review all styling related to a branch with a strict focus on CSS quality, maintainability, consistency, and correctness.
 
-## Before review
+## Preparation
 
 - Read `AGENTS.md` to load project styling conventions and hard rules
 - Run `git diff --name-only origin/main...HEAD` to enumerate changed files (substitute the confirmed target branch if not `main`)
 - Read adjacent component styles to understand existing patterns before flagging inconsistencies
 
-## Review scope
+## Scope
 
 From the changed files, review:
 
@@ -180,7 +180,7 @@ Check whether:
 - Do not accept "it's a simple component" as justification for skipping `.module.css` or stories
 - When the same issue appears in multiple places, flag it once and note how many occurrences exist — do not list every instance individually
 
-## Required output format
+## Output
 
 ### Findings
 

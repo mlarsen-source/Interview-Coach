@@ -1,4 +1,4 @@
-# Pre-Merge Full Review
+# Merge Review
 
 ## Purpose
 
@@ -436,7 +436,7 @@ The principle: silence is the default for unchanged code. Speak about adjacent c
 
 ---
 
-## Before starting
+## Preparation
 
 1. Read `AGENTS.md` and the root [README.md](../../README.md) to load conventions, hard rules, and architecture.
 
@@ -544,29 +544,29 @@ If any of steps 1–4 are skipped, the phase output is invalid and must be redon
 
 ---
 
-## Phase 1 — Branch change impact audit (`branch-change-impact-audit.md`)
+## Phase 1 — Branch change impact audit (`branch-audit.md`)
 
 Always run. Establishes the scope and intent of the branch before any other review begins.
 
 1. Run the Phase 1 deterministic floor (see Phase deterministic check list above).
-2. Read `docs/agent-workflows/branch-change-impact-audit.md` in full and run the branch audit it defines.
+2. Read `docs/agent-workflows/branch-audit.md` in full and run the branch audit it defines.
 3. Add subjective observations only if the sub-workflow doc calls for them.
 4. Print phase narrative + Session State Block + Gate Block (with Coverage report). Stop.
 
 Note: if feature flag changes are detected during Phase 1, the branch audit workflow will ask the user whether to run the feature flag gating review inline. If the user accepts, that review runs as part of Phase 1 and Phase 5 will be skipped (record this in the Session State Block).
 
-## Phase 2 — Code quality review (`code-quality-review.md`)
+## Phase 2 — Code quality review (`code-review.md`)
 
 Always run. Apply to all changed `.ts`, `.tsx`, `.js`, and `.jsx` files.
 
 1. Run the Phase 2 deterministic floor: type-check, lint, prettier (if configured), build (if configured), and the pattern checks listed in the Phase deterministic check list section. Capture every command's exit code and relevant output.
-2. Read `docs/agent-workflows/code-quality-review.md` in full and run any additional checks it defines, treating them as additional deterministic items.
+2. Read `docs/agent-workflows/code-review.md` in full and run any additional checks it defines, treating them as additional deterministic items.
 3. Only after the deterministic floor is complete, add subjective observations (naming, structure, suggested refactors, etc.) — each labeled `Subjective`.
 4. Print phase narrative + Session State Block + Gate Block (with Coverage report). Stop.
 
 Note: at the end of Phase 2, the code quality review may ask whether to run the CSS and component standards review. If the user accepts, that review runs as part of Phase 2 and Phase 3 will be skipped (record this in the Session State Block).
 
-## Phase 3 — CSS and component standards review (`css-and-component-standards-review.md`)
+## Phase 3 — CSS and component standards review (`css-review.md`)
 
 If the CSS review was already completed during Phase 2, print the Session State Block, tell the user "Phase 3 already completed during Phase 2 — see CSS review output above," and ask if they are ready to move to Phase 4. Stop.
 
@@ -581,11 +581,11 @@ If not applicable, print the Session State Block, tell the user "Phase 3 skipped
 Otherwise:
 
 1. Run the Phase 3 deterministic floor (stylelint if configured, inline-style pattern check, hardcoded-color/spacing pattern check).
-2. Read `docs/agent-workflows/css-and-component-standards-review.md` in full and run additional checks it defines.
+2. Read `docs/agent-workflows/css-review.md` in full and run additional checks it defines.
 3. Add subjective observations after deterministic checks, each labeled `Subjective`.
 4. Print phase narrative + Session State Block + Gate Block (with Coverage report). Stop.
 
-## Phase 4 — Test suite quality review (`test-suite-quality-review.md`)
+## Phase 4 — Test suite quality review (`test-review.md`)
 
 Run if any of the following are true:
 
@@ -597,11 +597,11 @@ If not applicable, print the Session State Block, tell the user "Phase 4 skipped
 Otherwise:
 
 1. Run the Phase 4 deterministic floor: `pnpm test` is not configured — record "not configured — skipped"; run Storybook story coverage check on new/modified components; pattern check for `.skip` / `.only` / `xit` / `xdescribe` in story files.
-2. Read `docs/agent-workflows/test-suite-quality-review.md` in full and run any additional checks it defines.
+2. Read `docs/agent-workflows/test-review.md` in full and run any additional checks it defines.
 3. Add subjective observations after deterministic checks (story naming, state coverage, missing edge-case stories), each labeled `Subjective`.
 4. Print phase narrative + Session State Block + Gate Block (with Coverage report). Stop.
 
-## Phase 5 — Feature flag gating review (`feature-flag-gating-review.md`)
+## Phase 5 — Feature flag gating review (`flag-review.md`)
 
 If the feature flag review was already completed during Phase 1, print the Session State Block, tell the user "Phase 5 already completed during Phase 1 — see flag review output above," and ask if they are ready to move to Phase 6. Stop.
 
@@ -612,7 +612,7 @@ If not applicable, print the Session State Block, tell the user "Phase 5 skipped
 Otherwise:
 
 1. Run the Phase 5 deterministic floor: flag-off-path verifiability check (grep for flag identifier, confirm else branch exists), new-flag-in-registry check.
-2. Read `docs/agent-workflows/feature-flag-gating-review.md` in full and run any additional checks it defines.
+2. Read `docs/agent-workflows/flag-review.md` in full and run any additional checks it defines.
 3. Add subjective observations after deterministic checks, each labeled `Subjective`.
 4. Print phase narrative + Session State Block + Gate Block (with Coverage report). Stop.
 
@@ -629,7 +629,7 @@ Treat documentation inaccuracies as Phase findings under the rules above — fix
 
 ---
 
-## Phase 6 — PR description (`pull-request-description-generator.md`)
+## Phase 6 — PR description (`pr-description.md`)
 
 **Mandatory step. Always ask. Never skip the decision.** This is a pre-merge workflow; the PR-description decision is part of the required flow. The developer may decline generation, but you may not assume they don't want it and you may not end the workflow without an explicit generate-or-skip reply.
 
@@ -658,7 +658,7 @@ I will not generate the PR description and I will not end the workflow until you
 
 After printing this prompt, the response ends. Stop.
 
-**If the user says generate:** Confirm the Unresolved count is zero. If it is not, return to the relevant phase gate and resolve those findings first — do not generate a PR description with unresolved findings. Once clear, read `docs/agent-workflows/pull-request-description-generator.md` in full and generate the PR description following that workflow exactly.
+**If the user says generate:** Confirm the Unresolved count is zero. If it is not, return to the relevant phase gate and resolve those findings first — do not generate a PR description with unresolved findings. Once clear, read `docs/agent-workflows/pr-description.md` in full and generate the PR description following that workflow exactly.
 
 **If the user says skip:** Acknowledge briefly, print a final Session State Block summarizing what was done, and end the workflow. Do not lobby to generate it anyway.
 

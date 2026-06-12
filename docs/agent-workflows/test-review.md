@@ -1,12 +1,19 @@
-# Test Suite Quality Review
+# Test Review
 
 ## Purpose
 
 Reviews the **quality and simplicity of the existing test suite** — whether tests are readable, practical, and focused on behavior rather than implementation details. Flags overengineering, unnecessary abstraction, and tests that are too complex for their value.
 
-**Does not:** check for test coverage gaps in newly written code (that is handled by `code-quality-review.md`). Does not run tests or generate new tests. Scope is existing test quality only, not coverage metrics.
+**Does not:** check for test coverage gaps in newly written code (that is handled by `code-review.md`). Does not run tests or generate new tests. Scope is existing test quality only, not coverage metrics.
 
 **Note:** Interview Coach has no frontend test runner configured. `pnpm test` does not exist in `frontend/package.json`. When invoked, limit this review to **Storybook story quality** — `.stories.tsx` files are the primary coverage mechanism for this project. State "no test runner configured" at the top and proceed directly to story review.
+
+---
+
+## Preparation
+
+- Read `AGENTS.md` to load project conventions and understand testing expectations (Storybook stories are the primary coverage mechanism; no test runner configured).
+- Enumerate story files: `git ls-files frontend/**/*.stories.tsx` or equivalent glob.
 
 ---
 
@@ -94,7 +101,7 @@ Apply the same standard to every test category that exists in the project:
 - end-to-end tests that try to do too much in one file or flow
 - utilities or wrappers that make the suite harder to understand than necessary
 
-## Required output format
+## Output
 
 ### 1. High-level assessment
 
@@ -142,7 +149,4 @@ For each test file or logical group, explain:
 - Do not suggest turning the suite into a professional enterprise-grade testing system
 - The target is not perfection
 - Err on the side of fewer, simpler, more basic tests even if the suite is less comprehensive than a production-grade strategy
-
-## Final instruction
-
-Review the entire test suite like a practical reviewer whose main goal is to keep the tests grounded, readable, simple, and believable.
+- Review the entire test suite like a practical reviewer whose main goal is to keep the tests grounded, readable, simple, and believable

@@ -1,10 +1,17 @@
-# Pull Request Description Generator
+# PR Description
 
 ## Purpose
 
 Generates **PR-ready text** — a dependency declaration, a one-paragraph summary, a grouped file-by-file change list, environment variable callouts, migration notes, a change-overview table, and linked tickets — based strictly on the final diff between the current branch and its target branch (default: `main`). Output is formatted for direct paste into a GitHub PR description.
 
 **Does not:** review code quality, flag issues, make recommendations, or describe anything not visible in the final diff. This workflow produces output text only — it never reviews.
+
+---
+
+## Preparation
+
+- Read `AGENTS.md` to confirm the project's target branch convention (default: `main`).
+- The "Context isolation" and "Inputs required" sections below serve as the operational preparation steps — follow them in order before generating any output.
 
 ---
 
@@ -68,7 +75,7 @@ Do not ask separate questions for target branch, branch base, or detected ticket
 
 ---
 
-## Strict rules
+## Constraints
 
 - Use only the actual final diff between the current branch and the confirmed target branch
 - Do not mention anything that may have been added and later removed during development — reviewers only see the final diff and cannot follow references to code that no longer exists
@@ -85,7 +92,7 @@ Do not ask separate questions for target branch, branch base, or detected ticket
 
 ---
 
-## Required output format
+## Output
 
 Inside the single markdown code block, format the response exactly like this:
 

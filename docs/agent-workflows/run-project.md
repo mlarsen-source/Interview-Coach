@@ -1,8 +1,16 @@
-# Run Project Workflow
+# Run Project
 
-**Trigger phrases:** "run the project", "run the interview coach", "run the interview project", "start the project", "start interview coach", "start the app", "launch the project", or any close variation.
+## Purpose
 
-**Before running anything**, the agent must confirm with the user:
+Starts the Interview Coach backend (port 8000) and frontend (port 3000) from a clean state — detecting OS, verifying prerequisites, fixing what is missing, and reporting both URLs once both services are running.
+
+**Does not:** modify application code, manage deployments, or run tests. Scope is exclusively starting the local development stack.
+
+---
+
+## Preparation
+
+Before running anything, the agent must confirm with the user:
 
 > "Ready to start Interview Coach. This will launch the backend (port 8000) and frontend (port 3000).
 > Before I start — have you accepted the Groq Orpheus TTS terms for your account? This is required for the interviewer voice. Visit https://console.groq.com/playground?model=canopylabs%2Forpheus-v1-english to accept if you haven't yet.
@@ -11,6 +19,17 @@
 Only after the user confirms does the agent proceed. The agent starts both services without any terminal input from the user.
 
 **Required order:** detect OS → check OS prerequisites → fix OS prerequisites → assess project state → fix project prerequisites → start backend → start frontend → report.
+
+---
+
+## Constraints
+
+- **Hard stop — missing env:** If `backend/.env` is missing or `GROQ_API_KEY` is not set, tell the user and do not start.
+- **Hard stop — unknown port occupant:** If port 8000 or 3000 is occupied by an unrecognized process, identify the process and ask the user before killing it.
+- **Hard stop — missing OS prerequisites:** Python, Node.js, pnpm, and ffmpeg must all pass before touching project setup. Tell the user and stop if any are missing.
+- Do not start the frontend before `Application startup complete` is confirmed from the backend.
+- Do not run `git commit` or `git push` as part of this workflow.
+- Do not modify `backend/services/tone_delivery_analyzer/emotion_model.py`.
 
 ---
 
@@ -314,6 +333,19 @@ Frontend:  http://localhost:3000
 ```
 
 If the emotion model is downloading for the first time, note that the backend will be slow to respond until the download completes (~1 GB).
+
+---
+
+## Output
+
+Once both services are confirmed running, report exactly:
+
+```
+Backend:   http://localhost:8000  (API docs: http://localhost:8000/docs)
+Frontend:  http://localhost:3000
+```
+
+Include a note if the emotion model is still downloading on first run. No other output is required unless an error or hard stop was encountered.
 
 ---
 
