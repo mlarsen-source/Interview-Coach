@@ -8,10 +8,37 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # AGENTS.md
 
+**Interview Coach** is an AI-powered mock interview platform. Users select an interviewer persona, listen to a spoken question via text-to-speech, record their answer in the browser, and receive structured per-segment feedback on delivery, tone, and answer quality. The frontend (Next.js 16) orchestrates a FastAPI backend that handles all speech, emotion, and LLM processing.
+
 Project-wide conventions, patterns, and agent instructions. `CLAUDE.md` points here.
 
 For setup, running both services, and repo structure, see the [root README](README.md).
 For system architecture and data flow, see [docs/architecture.md](docs/architecture.md).
+
+---
+
+## Development commands
+
+Run from `frontend/` unless noted.
+
+| Task         | Command             |
+| ------------ | ------------------- |
+| Dev server   | `pnpm dev` → :3000  |
+| Production   | `pnpm build`        |
+| Start prod   | `pnpm start`        |
+| Lint         | `pnpm lint`         |
+| Type check   | `pnpm typecheck`    |
+| Format       | `pnpm format`       |
+| Format check | `pnpm format:check` |
+
+Install hooks: `pnpm install` (runs `lefthook install` via `prepare`).
+
+Git hooks (repo root `lefthook.yml`):
+
+- **pre-commit:** Prettier and Ruff format **staged** files and re-stage fixes (`stage_fixed: true`).
+- **pre-push:** ESLint, Prettier check, and TypeScript on the frontend; Ruff check/format on the backend.
+
+Backend: `cd backend && uvicorn app:app --reload` — starts at :8000. First run downloads ~1 GB of model weights.
 
 ---
 
@@ -59,6 +86,7 @@ Interview-Coach/
   CLAUDE.md                   — points to AGENTS.md
   docs/
     architecture.md           — system architecture and data flow
+    workflow-authoring.md     — standards and template for writing workflow docs
     agent-workflows/          — repeatable AI agent workflow guides
   backend/                    — FastAPI (Python), http://localhost:8000
     app.py
@@ -107,19 +135,63 @@ Call these from the browser via `fetch`. Do not reimplement ML, TTS, or LLM logi
 - `@/*` maps to the **frontend project root** (see `frontend/tsconfig.json`), e.g. `@/lib/prompts/questions`.
 - Prefer `@/` over deep relative paths (`../../../`).
 
-### Hard rules (never violate)
+---
 
-1. Never run `git commit` or `git push` without explicit user approval.
-2. Do not put backend secrets or API keys in frontend code — keys belong in `backend/.env` only.
-3. Do not duplicate pipeline logic (Whisper, emotion model, TTS, LLM) in the frontend; use backend endpoints.
-4. Use `next/image` for images and `next/link` for internal navigation — not raw `<img>` or `<a>` for in-app routes.
-5. Prefer `@/` imports over long relative paths when the alias applies.
-6. No inline `style` props in JSX (exception: `*.stories.tsx` for Storybook decorators; dev-only pages under `app/dev/**`).
-7. Every new component that has any of its own styles requires `ComponentName.module.css`.
-8. Every new reusable component or component with meaningful visual states requires `ComponentName.stories.tsx` with named stories and real mock data.
-9. If you modify a component's structural JSX, proactively update its `.module.css` and `.stories.tsx` when those files exist.
-10. Do not modify `AGENTS.md` without proposing the change first when the edit reflects new team conventions.
-11. Do not modify `backend/services/tone_delivery_analyzer/emotion_model.py` — it is marked do not modify.
+## Architecture Constraints
+
+These constraints are never negotiable. Each applies project-wide and takes precedence over convenience, speed, or adjacent conventions.
+
+### Commit and push authorization
+
+Never run `git commit` or `git push` without explicit user approval.
+
+### Secret containment
+
+Do not put backend secrets or API keys in frontend code. All keys belong in `backend/.env` only. Never commit `.env` files.
+
+### Pipeline logic stays in backend
+
+Do not duplicate pipeline logic (Whisper, emotion model, TTS, LLM) in the frontend. Call backend endpoints instead.
+
+### Next.js navigation primitives
+
+Use `next/image` for images and `next/link` for internal navigation — not raw `<img>` or `<a>` for in-app routes.
+
+### Path alias preference
+
+Prefer `@/` imports over long relative paths (`../../../`) when the alias applies.
+
+### No inline style props
+
+No inline `style` props in JSX. Exceptions: `*.stories.tsx` for Storybook decorators; dev-only pages under `app/dev/**`.
+
+### CSS module requirement
+
+Every new component that has any of its own styles requires `ComponentName.module.css`.
+
+### Storybook requirement
+
+Every new reusable component or component with meaningful visual states requires `ComponentName.stories.tsx` with named stories and real mock data.
+
+### Story and style sync
+
+If you modify a component's structural JSX, proactively update its `.module.css` and `.stories.tsx` when those files exist.
+
+### AGENTS.md modification protocol
+
+Do not modify `AGENTS.md` without proposing the change first when the edit reflects new team conventions.
+
+### Emotion model is read-only
+
+Do not modify `backend/services/tone_delivery_analyzer/emotion_model.py` — it is marked do not modify.
+
+### Authentication (when implemented)
+
+When authentication is added to any route or API endpoint, the auth check MUST execute before any data access, side effect, or business logic — not at the top of a file, but at the top of the request handler. An auth bypass that is caught only at the data layer is not acceptable.
+
+### Database security (when implemented)
+
+When a database is added: always scope queries to the authenticated owner's records. Never interpolate user input into SQL strings — use parameterized queries or ORM methods only. Wrap multi-step writes in transactions.
 
 ---
 
@@ -132,7 +204,7 @@ The interviewer voice uses the Groq Orpheus TTS model (`canopylabs/orpheus-v1-en
 **When to raise this proactively:**
 - When helping a new user set up the project
 - When the user reports the interviewer is silent or sees "Could not load audio"
-- Before starting the project (see Running the project section below)
+- Before starting the project (see below)
 - Any time a user adds a new `GROQ_API_KEY` to their `.env`
 
 **Guidance to give:**
@@ -140,9 +212,7 @@ The interviewer voice uses the Groq Orpheus TTS model (`canopylabs/orpheus-v1-en
 
 **Symptom if skipped:** backend runs fine, `POST /speech/tts` returns 400, frontend shows "Could not load audio — check the backend is running." Recording and transcription still work; only the voice is affected.
 
----
-
-## Running the project (agent-driven)
+### Starting the project
 
 When the user says any of the following — **"run the project"**, **"run the interview coach"**, **"start the project"**, **"start interview coach"**, **"start the app"**, **"launch the project"**, or any close variation — the agent must first confirm with the user:
 
@@ -164,31 +234,6 @@ Only after the user confirms, follow `docs/agent-workflows/run-project.md` exact
 - A port is occupied by an unknown process → ask the user before killing it
 
 **When the user says "stop the project" / "stop the app":** kill the processes on ports 8000 and 3000 using the method in `docs/agent-workflows/run-project.md`.
-
----
-
-## Development commands
-
-Run from `frontend/` unless noted.
-
-| Task         | Command             |
-| ------------ | ------------------- |
-| Dev server   | `pnpm dev` → :3000  |
-| Production   | `pnpm build`        |
-| Start prod   | `pnpm start`        |
-| Lint         | `pnpm lint`         |
-| Type check   | `pnpm typecheck`    |
-| Format       | `pnpm format`       |
-| Format check | `pnpm format:check` |
-
-Install hooks: `pnpm install` (runs `lefthook install` via `prepare`).
-
-Git hooks (repo root `lefthook.yml`):
-
-- **pre-commit:** Prettier and Ruff format **staged** files and re-stage fixes (`stage_fixed: true`).
-- **pre-push:** ESLint, Prettier check, and TypeScript on the frontend; Ruff check/format on the backend.
-
-Backend: `cd backend && uvicorn app:app --reload` — starts at :8000. First run downloads ~1 GB of model weights.
 
 ---
 
@@ -317,24 +362,50 @@ After features or conventions change, update this file:
 - New backend endpoints → **Backend integration**
 - New pnpm scripts → **Development commands**
 - New env vars → **Environment variables**
-- New hard rules or team decisions → **Hard rules**
+- New hard rules or team decisions → **Architecture Constraints**
 
-For task-specific reviews, use workflows in `docs/agent-workflows/`. Invoke explicitly, e.g.:
+For task-specific reviews, use workflows in `docs/agent-workflows/`. For authoring standards and the required document structure, see [docs/workflow-authoring.md](docs/workflow-authoring.md).
+
+### Workflow Library
+
+| Workflow             | Use when                                       |
+| -------------------- | ---------------------------------------------- |
+| `merge-review.md`    | Full pre-merge review with phase gates         |
+| `branch-audit.md`    | What changed and regression risks vs `main`    |
+| `code-review.md`     | Correctness, conventions, API integration      |
+| `css-review.md`      | module.css, Tailwind placement, Storybook      |
+| `test-review.md`     | Test simplicity (or Storybook if no tests yet) |
+| `qa-checklist.md`    | Manual QA for recording/scorecard flows        |
+| `pr-description.md`  | PR title and description from diff             |
+| `feature-plan.md`    | Plan before non-trivial features               |
+| `flag-review.md`     | Env/flag gating completeness                   |
+| `figma-to-code.md`   | Implement UI from Figma                        |
+| `run-project.md`     | Start backend + frontend from scratch          |
+
+### Invocation
+
+Invoke workflows explicitly. Examples:
 
 ```
-Use docs/agent-workflows/pull-request-description-generator.md for this branch.
-```
+Use docs/agent-workflows/merge-review.md and run a complete pre-merge review of this branch.
 
-| Workflow                                | Use when                                       |
-| --------------------------------------- | ---------------------------------------------- |
-| `pre-merge-full-review.md`              | Full pre-merge review with phase gates         |
-| `branch-change-impact-audit.md`         | What changed and regression risks vs `main`    |
-| `code-quality-review.md`               | Correctness, conventions, API integration      |
-| `css-and-component-standards-review.md` | module.css, Tailwind placement, Storybook      |
-| `test-suite-quality-review.md`          | Test simplicity (or Storybook if no tests yet) |
-| `manual-qa-checklist-generator.md`      | Manual QA for recording/scorecard flows        |
-| `pull-request-description-generator.md` | PR title and description from diff             |
-| `feature-implementation-planning.md`    | Plan before non-trivial features               |
-| `feature-flag-gating-review.md`         | Env/flag gating completeness                   |
-| `figma-design-to-code.md`              | Implement UI from Figma                        |
-| `run-project.md`                        | Start backend + frontend from scratch          |
+Use docs/agent-workflows/branch-audit.md and audit what changed on this branch against main.
+
+Use docs/agent-workflows/code-review.md and perform a strict code quality review of this branch against main.
+
+Use docs/agent-workflows/css-review.md and review all styling and component changes in this branch.
+
+Use docs/agent-workflows/test-review.md and review the existing test suite for simplicity and overengineering.
+
+Use docs/agent-workflows/qa-checklist.md and generate a concise manual QA checklist for the current diff.
+
+Use docs/agent-workflows/pr-description.md and generate PR-ready text for the current branch against main.
+
+Use docs/agent-workflows/feature-plan.md and create an implementation plan for this feature before writing code.
+
+Use docs/agent-workflows/flag-review.md and verify that this feature flag fully controls the new behavior and supports rollback.
+
+Use docs/agent-workflows/figma-to-code.md and implement this Figma design.
+
+Use docs/agent-workflows/run-project.md and start the project.
+```

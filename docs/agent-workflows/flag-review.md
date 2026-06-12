@@ -1,10 +1,10 @@
-# Feature Flag Gating Review
+# Flag Review
 
 ## Purpose
 
 Verifies that a feature flag **fully controls the intended behavior** and supports clean rollback — no bypassed call sites, no partial gating, no hidden dependencies that prevent the flag from acting as a true on/off switch.
 
-**Does not:** review general code quality, correctness of implementation outside flag gating, CSS, or test quality. Only code paths and dependencies related to the flag are in scope. General code quality is covered by `code-quality-review.md`.
+**Does not:** review general code quality, correctness of implementation outside flag gating, CSS, or test quality. Only code paths and dependencies related to the flag are in scope. General code quality is covered by `code-review.md`.
 
 ---
 
@@ -15,9 +15,17 @@ This project has no formal feature flag system or flag registry. Apply this work
 - A new `NEXT_PUBLIC_*` env var is introduced that gates behavior (not just configures an API URL like `NEXT_PUBLIC_API_URL`)
 - A new behavioral mode is added that must cleanly support rollback (e.g., a new `feedbackMode` variant or a new interview flow toggle)
 
-For simple API configuration env vars and pure UI state variables like `feedbackMode` (perQuestion/endOfInterview), this review is optional unless the behavior branch is complex enough to warrant verification. When in doubt, use `code-quality-review.md` instead.
+For simple API configuration env vars and pure UI state variables like `feedbackMode` (perQuestion/endOfInterview), this review is optional unless the behavior branch is complex enough to warrant verification. When in doubt, use `code-review.md` instead.
 
 When running this review: treat the env var or toggle as the "flag." The flag registry check does not apply — there is no registry in this project.
+
+---
+
+## Preparation
+
+- Read `AGENTS.md` to load project conventions and pipeline architecture.
+- Run `git diff --name-only origin/main...HEAD` to enumerate changed files.
+- Identify the flag or env var under review from the diff before proceeding.
 
 ---
 
@@ -25,7 +33,7 @@ When running this review: treat the env var or toggle as the "flag." The flag re
 
 Verify that a feature flag cleanly separates the enabled and disabled behaviors without mixed-mode execution, bypassed call sites, or hidden dependencies.
 
-## Review scope
+## Scope
 
 - Review the current branch against `main` (or the confirmed target branch)
 - Inspect all changed files and directly affected call sites related to the flagged behavior
@@ -76,7 +84,7 @@ Check for:
 - Do not propose broad redesigns
 - Keep recommendations limited to the minimal corrections needed for complete gating
 
-## Required output format
+## Output
 
 ### Flag summary
 

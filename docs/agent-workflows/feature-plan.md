@@ -1,4 +1,4 @@
-# Feature Implementation Planning
+# Feature Plan
 
 ## Purpose
 
@@ -8,9 +8,10 @@ Produces a **structured implementation plan before any code is written** for non
 
 ---
 
-## Before planning
+## Preparation
 
-**Confirm tracking (optional).** Before producing the plan, ask whether there is a GitHub issue or ticket to reference. Record it in the plan header if provided. Do not block planning if there is none.
+- Read `AGENTS.md` to load project architecture, backend integration contracts, and file/component conventions.
+- Confirm tracking (optional): ask whether there is a GitHub issue or ticket to reference. Record it in the plan header if provided. Do not block planning if there is none.
 
 ---
 
@@ -42,6 +43,21 @@ Group files by category such as:
 - Storybook stories (no test runner configured; stories are the coverage mechanism)
 - docs (`backend/README.md`, `AGENTS.md` if conventions change)
 
-## Usage
+## Output
 
-Use this workflow for planning-heavy work. Do not treat it as a requirement for every trivial edit or small isolated fix.
+The plan must include, in order:
+
+1. **Header** — feature name, optional issue/ticket reference
+2. **Context** — why the change is being made
+3. **Backend API changes** — new or changed routes, schemas, env vars
+4. **File manifest** — every new or changed file, grouped by category (see File manifest guidance above)
+5. **Implementation order** — phased sequence of work
+6. **Integration points** — where the new code connects to existing systems
+7. **Verification** — how to validate end to end
+
+## Constraints
+
+- Do not write code as part of the plan output
+- Do not make implementation decisions without user input on ambiguous scope
+- Do not treat this workflow as required for trivial single-file edits
+- Do not begin implementation before the plan is presented and confirmed

@@ -1,10 +1,18 @@
-# Branch Change Impact Audit
+# Branch Audit
 
 ## Purpose
 
-Surveys the current branch against `main` to answer: **what changed, which behavior is affected, and are there regression or integration risks?** Produces a factual map of the change set before any quality review begins. When feature flag changes are detected, offers to run `feature-flag-gating-review.md` before continuing.
+Surveys the current branch against `main` to answer: **what changed, which behavior is affected, and are there regression or integration risks?** Produces a factual map of the change set before any quality review begins. When feature flag changes are detected, offers to run `flag-review.md` before continuing.
 
-**Does not:** assess code quality, correctness of implementation, CSS standards, or test quality. Does not propose redesigns or broad fixes — it identifies and describes, it does not prescribe. Code quality is covered by `code-quality-review.md`.
+**Does not:** assess code quality, correctness of implementation, CSS standards, or test quality. Does not propose redesigns or broad fixes — it identifies and describes, it does not prescribe. Code quality is covered by `code-review.md`.
+
+---
+
+## Preparation
+
+- Read `AGENTS.md` to load project conventions, architecture, and pipeline overview.
+- Run `git diff --name-only origin/main...HEAD` to enumerate changed files.
+- Run `git log --oneline origin/main..HEAD` to understand commit intent.
 
 ---
 
@@ -43,7 +51,7 @@ If the diff introduces or modifies `NEXT_PUBLIC_*` env vars used for behavioral 
 
 - Note which files and call sites are involved
 - Ask the user: "Behavioral gating changes detected. Would you like me to run the feature flag gating review before continuing the audit?"
-- If the user says yes, read and run `docs/agent-workflows/feature-flag-gating-review.md` and include its output as a subsection before continuing
+- If the user says yes, read and run `docs/agent-workflows/flag-review.md` and include its output as a subsection before continuing
 - If the user says no, note it and continue the audit without the flag review
 
 This project has no formal feature flag registry. Simple UI state variables like `feedbackMode` do not require this review unless their branching logic is complex.
@@ -65,7 +73,7 @@ Check for:
 - Do not recommend unrelated cleanup
 - Keep recommendations minimal and limited to what is necessary to restore the intended behavior
 
-## Required output format
+## Output
 
 ### Branch summary
 

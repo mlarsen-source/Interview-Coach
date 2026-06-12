@@ -37,51 +37,54 @@ Tell the agent which workflow file to use and what task to perform.
 Example:
 
 ```md
-Use `docs/agent-workflows/pull-request-description-generator.md` and generate PR-ready text for this branch against `main`.
+Use `docs/agent-workflows/pr-description.md` and generate PR-ready text for this branch against `main`.
 ```
 
 ### Copy/paste prompt examples
 
 ```
-Use docs/agent-workflows/pre-merge-full-review.md and run a complete pre-merge review of this branch.
+Use docs/agent-workflows/merge-review.md and run a complete pre-merge review of this branch.
 
-Use docs/agent-workflows/branch-change-impact-audit.md and audit what changed on this branch against main.
+Use docs/agent-workflows/branch-audit.md and audit what changed on this branch against main.
 
-Use docs/agent-workflows/code-quality-review.md and perform a strict code quality review of this branch against main.
+Use docs/agent-workflows/code-review.md and perform a strict code quality review of this branch against main.
 
-Use docs/agent-workflows/css-and-component-standards-review.md and review all styling and component changes in this branch.
+Use docs/agent-workflows/css-review.md and review all styling and component changes in this branch.
 
-Use docs/agent-workflows/test-suite-quality-review.md and review the existing test suite for simplicity and overengineering.
+Use docs/agent-workflows/test-review.md and review the existing test suite for simplicity and overengineering.
 
-Use docs/agent-workflows/feature-flag-gating-review.md and verify that this feature flag fully controls the new behavior and supports rollback.
+Use docs/agent-workflows/flag-review.md and verify that this feature flag fully controls the new behavior and supports rollback.
 
-Use docs/agent-workflows/manual-qa-checklist-generator.md and generate a concise manual QA checklist for the current diff.
+Use docs/agent-workflows/qa-checklist.md and generate a concise manual QA checklist for the current diff.
 
-Use docs/agent-workflows/pull-request-description-generator.md and generate PR-ready text for the current branch against main.
+Use docs/agent-workflows/pr-description.md and generate PR-ready text for the current branch against main.
 
-Use docs/agent-workflows/feature-implementation-planning.md and create an implementation plan for this feature before writing code.
+Use docs/agent-workflows/feature-plan.md and create an implementation plan for this feature before writing code.
 
-Use docs/agent-workflows/figma-design-to-code.md and implement this Figma design.
+Use docs/agent-workflows/figma-to-code.md and implement this Figma design.
+
+Use docs/agent-workflows/run-project.md and start the project.
 ```
 
 ## Workflows
 
-| File                                    | What it does                                                                                                                                                      | What it does NOT do                                       |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `pre-merge-full-review.md`              | Orchestrates review phases with user checkpoints and a mandatory PR-description decision                                                                          | Performs review logic itself — delegates to sub-workflows |
-| `branch-change-impact-audit.md`         | Surveys what changed, behavior impact, regression risks, integration consistency                                                                                  | Assesses code quality, CSS, or test quality               |
-| `code-quality-review.md`                | Reviews implementation correctness, performance, backend API usage, new route security, conventions, architecture, and React patterns                             | Summarizes what changed; deep CSS review                  |
-| `css-and-component-standards-review.md` | CSS quality, module.css compliance, Tailwind-vs-module.css placement, design token usage, Storybook story coverage                                                | Business logic, JS correctness                            |
-| `test-suite-quality-review.md`          | Reviews test simplicity, readability, and appropriate scope                                                                                                       | Checks coverage gaps in new code; runs tests              |
-| `feature-flag-gating-review.md`         | Verifies flag fully controls behavior and supports clean rollback                                                                                                 | General code quality outside flag gating                  |
-| `manual-qa-checklist-generator.md`      | Generates a manual QA checklist scoped to the branch diff                                                                                                         | Automates testing; reviews code                           |
-| `pull-request-description-generator.md` | Generates PR-ready text — summary, change-overview table, grouped file-by-file changes, dependency declaration, env var callouts, migration notes, linked tickets | Reviews or recommends anything                            |
-| `feature-implementation-planning.md`    | Creates an implementation plan covering scope, schema changes, complete file manifest, implementation order, integration points, and verification steps           | Writes code; reviews existing code                        |
-| `figma-design-to-code.md`               | Guides Figma design extraction, token mapping, and component implementation                                                                                       | Reviews existing code independently                       |
-| `run-project.md`                         | Starts backend + frontend from scratch; assesses project state and runs only what is needed; also handles stopping the project                                    | Requires user terminal input                              |
+| File                | What it does                                                                                                                                                      | What it does NOT do                                       |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `merge-review.md`   | Orchestrates review phases with user checkpoints and a mandatory PR-description decision                                                                          | Performs review logic itself — delegates to sub-workflows |
+| `branch-audit.md`   | Surveys what changed, behavior impact, regression risks, integration consistency                                                                                  | Assesses code quality, CSS, or test quality               |
+| `code-review.md`    | Reviews implementation correctness, performance, backend API usage, new route security, conventions, architecture, and React patterns                             | Summarizes what changed; deep CSS review                  |
+| `css-review.md`     | CSS quality, module.css compliance, Tailwind-vs-module.css placement, design token usage, Storybook story coverage                                                | Business logic, JS correctness                            |
+| `test-review.md`    | Reviews test simplicity, readability, and appropriate scope                                                                                                       | Checks coverage gaps in new code; runs tests              |
+| `flag-review.md`    | Verifies flag fully controls behavior and supports clean rollback                                                                                                 | General code quality outside flag gating                  |
+| `qa-checklist.md`   | Generates a manual QA checklist scoped to the branch diff                                                                                                         | Automates testing; reviews code                           |
+| `pr-description.md` | Generates PR-ready text — summary, change-overview table, grouped file-by-file changes, dependency declaration, env var callouts, migration notes, linked tickets | Reviews or recommends anything                            |
+| `feature-plan.md`   | Creates an implementation plan covering scope, schema changes, complete file manifest, implementation order, integration points, and verification steps           | Writes code; reviews existing code                        |
+| `figma-to-code.md`  | Guides Figma design extraction, token mapping, and component implementation                                                                                       | Reviews existing code independently                       |
+| `run-project.md`    | Starts backend + frontend from scratch; assesses project state and runs only what is needed; also handles stopping the project                                    | Requires user terminal input                              |
 
 ## Maintenance
 
 - Update these files when the team changes the workflow requirements or output formats
 - Treat these files as the canonical version rather than maintaining separate copies in multiple agent-specific files
 - When adding a new workflow, add it to this README and the workflow section in `AGENTS.md`
+- For authoring standards and the required document structure, see [docs/workflow-authoring.md](../workflow-authoring.md)
