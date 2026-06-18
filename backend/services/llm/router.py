@@ -247,7 +247,10 @@ def _generate_with_retry(
             continue
 
         try:
-            return json.loads(raw)
+            data = json.loads(raw)
+            if isinstance(data, list) and data:
+                data = data[0]
+            return data
         except json.JSONDecodeError as exc:
             last_error = exc
             continue
